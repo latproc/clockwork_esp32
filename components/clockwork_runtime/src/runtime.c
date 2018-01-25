@@ -173,3 +173,15 @@ void resetMachineBase(MachineBase *m) {
 	m->state = state_INIT;
 }
 
+void changeMachineState(struct MachineBase *m, int new_state, enter_func handler) {
+    assert(m->execute == 0);
+    if (m->state != new_state) {
+        m->state = new_state;
+        m->TIMER = 0;
+        m->START = upTime();
+        m->execute = handler;
+        // TODO: publish event change
+        markPending(m);
+    }
+}
+

@@ -41,15 +41,8 @@ int Pulse_check_state(struct Pulse *m) {
 	if (found == 0) { found = state_Pulse_off; }
 	if (found && found != m->machine.state) {
 		//ESP_LOGI(TAG, "%lld [%d] %s",upTime(), m->machine.id, (found == state_Pulse_on) ? "on" : "off" );
-        m->machine.state = found;
-        m->machine.TIMER = 0;
-        m->machine.START = upTime();
-        m->machine.execute = (enter_func) ((found == state_Pulse_on) ? pulse_enter_on : pulse_enter_off);
-        if (found == state_Pulse_on) {
-            m->machine.execute = (enter_func) pulse_enter_on;
-        }
-        else {
-            m->machine.execute = (enter_func) pulse_enter_off;
+        changeMachineState(&m->machine, found, (found == state_Pulse_on) ? pulse_enter_on : pulse_enter_off);
+        if (found == state_Pulse_off) {
             struct RTScheduler *scheduler = RTScheduler_get();
             while (!scheduler) {
                 taskYIELD();

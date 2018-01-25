@@ -1,10 +1,10 @@
 /*
     iointerface
-    
-    The io interface uses its own task to collect io status and store the results into a memory map. As part of its processing 
-    cycle it collects an output data map from clockwork and where there are differences, writes the differences to 
+
+    The io interface uses its own task to collect io status and store the results into a memory map. As part of its processing
+    cycle it collects an output data map from clockwork and where there are differences, writes the differences to
     the io.
-    
+
     The main processing loop periodically collects the io map and generate change events for the clockwork devices.
 */
 #include "iointerface.h"
@@ -20,7 +20,7 @@ static const char* TAG = "IOInterface";
 
 struct RTIOInterface {
 	struct list_head drivers;
-	struct list_head io;    
+	struct list_head io;
 	int processing;
 	int done;
 	SemaphoreHandle_t io_interface_mutex;
@@ -120,29 +120,29 @@ void readIO() {
     list_for_each_safe(&io_interface->io, item, next, list) {
         if (item->data->io_type == iot_digin) { // always read inputs
             uint8_t val = gpio_get_level(item->gpio);
-            uint8_t cw_val = rt_get_io_bit(item->data); 
+            uint8_t cw_val = rt_get_io_bit(item->data);
             if (val != cw_val) {
                 rt_set_io_bit(item->data, val);
                 item->data->status = IO_DONE;
                 if (item->machine) markPending(item->machine);
-                // TBD raise event 
+                // TBD raise event
             }
         }
         else if (item->data->io_type == iot_digout) { // read outputs but only update clockwork if output matches current state
             uint8_t val = gpio_get_level(item->gpio);
-            uint8_t cw_val = rt_get_io_bit(item->data); 
+            uint8_t cw_val = rt_get_io_bit(item->data);
             // if (val == cw_val && item->data->status == IO_PENDING) {
             //     ESP_LOGI(TAG,"readIO gpio change to %d done", cw_val);
             //     item->data->status = IO_DONE;
             //     if (item->machine) markPending(item->machine);
-            //     // TBD raise event 
+            //     // TBD raise event
             // }
         }
     }
 }
 
 void createIOMap() {
-    
+
     if (io_map) free(io_map);
     ESP_LOGI(TAG,"%lld creating IO map", upTime());
 
@@ -187,7 +187,7 @@ void RTIOInterface(void *pvParameter) {
     while (!scheduler_sem || !process_sem) vTaskDelay(5);
     initDrivers(io_interface);
     while (!io_map) vTaskDelay(1);
-   
+
 	io_interface->processing = 0;
 
 	while (1) {
@@ -198,5 +198,5 @@ void RTIOInterface(void *pvParameter) {
 }
 
 void registerIO(struct MachineBase *m, struct IOAddress *a) {
-    
+
 }

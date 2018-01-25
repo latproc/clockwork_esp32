@@ -16,7 +16,7 @@ void cwrt_process(unsigned long *last) {
             taskYIELD();
             res = xSemaphoreTake(process_sem, 1);
         }
-        if (runnableMachines()) 
+        if (runnableMachines())
         {
 #if DEBUG_LOG
             ESP_LOGI(TAG,"%lld running machines", upTime());

@@ -5,6 +5,15 @@ extern uint8_t *io_map;
 
 static const char* TAG = "RTIO";
 
+void init_io_address(struct IOAddress *addr, uint8_t module_position, uint8_t offset, uint8_t pos, uint8_t bitlen, IOType io_type, IOStatus status) {
+    addr->module_position = module_position;
+    addr->io_offset = offset;
+    addr->io_bitpos = pos;
+    addr->bitlen = bitlen;
+    addr->io_type = io_type;
+    addr->status = status;
+}
+
 void rt_set_io_bit(struct IOAddress *a, uint8_t val) {
 	ESP_LOGI(TAG, "setting bit %d:%d to %d",a->io_offset, a->io_bitpos, val);
     if (val)

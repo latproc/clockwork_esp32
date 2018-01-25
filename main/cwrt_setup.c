@@ -50,15 +50,15 @@ void cwrt_setup() {
     assert(m);
     if (m->init) m->init();
     ESP_LOGI(TAG,"%lld created machine [%d] %s", upTime(), m->id, m->name);
-    
-    // 
+
+    //
     // flasher1 = create_Pulse("F1");
     // assert(flasher1);
     // m = Pulse_To_MachineBase(flasher1);
     // assert(m);
     // if (m->init) m->init();
     // ESP_LOGI(TAG,"%lld created machine [%d] %s", upTime(), m->id, m->name);
-    
+
     struct RTIOInterface *interface = RTIOInterface_get();
     while (!interface) {
         taskYIELD();
@@ -69,7 +69,7 @@ void cwrt_setup() {
     RTIOInterface_add(interface, item_out);
     createIOMap();
     RTIOInterface_release();
-    
+
     ESP_LOGI(TAG,"%lld created machine [%d] %s", upTime(), m->id, m->name);
 
     debug("setup done");

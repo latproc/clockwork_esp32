@@ -5,10 +5,8 @@
 //	All rights reserved. Use of this source code is governed by the
 //	3-clause BSD License in LICENSE.txt.
 
+#include "base_includes.h"
 #include "pointoutput.h"
-#include <esp_log.h>
-#include "rtio.h"
-#include "iointerface.h"
 
 static const char* TAG = "PointOutput";
 
@@ -26,6 +24,9 @@ struct PointOutput *create_PointOutput(const char *name, int gpio, uint8_t offse
 	return p;
 }
 
+int point_output_enter_on(struct PointOutput *m, ccrContParam);
+int point_output_enter_off(struct PointOutput *m, ccrContParam);
+
 int PointOutput_check_state(struct PointOutput *m) {
     if (m->addr.status == IO_DONE) { // state change
         m->addr.status = IO_STABLE;
@@ -33,27 +34,17 @@ int PointOutput_check_state(struct PointOutput *m) {
 #if DEBUG_LOG
         ESP_LOGI(TAG,"io value is now %d (%d)", m->addr.value.u8, val);
 #endif
-
-        if (val) {
-            m->machine.state = state_PointOutput_on;
-            ESP_LOGI(TAG, "%lld [%d] %s",upTime(), m->machine.id, "on");
-        }
-        else {
-            m->machine.state = state_PointOutput_off;
-            ESP_LOGI(TAG, "%lld [%d] %s",upTime(), m->machine.id, "off");
-        }
+        if (val)
+            changeMachineState(PointOutput_To_MachineBase(m), state_PointOutput_on, (enter_func) point_output_enter_on);
+        else
+            changeMachineState(PointOutput_To_MachineBase(m), state_PointOutput_off, (enter_func) point_output_enter_off);
     }
     return 1;
 }
 
 void Init_PointOutput(struct PointOutput *m, const char *name, int gpio, uint8_t offset, uint8_t pos) {
 	initMachineBase(&m->machine, name);
-    m->addr.module_position = 0;
-    m->addr.io_offset = offset;
-    m->addr.io_bitpos = pos;
-    m->addr.bitlen = 1;
-    m->addr.status = IO_STABLE;
-    m->addr.io_type = iot_digout;
+    init_io_address(&m->addr, 0, offset, pos, 1, iot_digout, IO_STABLE);
 	m->machine.flags &= MASK_PASSIVE; /* not a passive machine */
     m->machine.state = state_PointOutput_off;
 	m->machine.check_state = ( int(*)(MachineBase*) )PointOutput_check_state;

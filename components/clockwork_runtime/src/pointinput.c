@@ -5,10 +5,7 @@
 //	All rights reserved. Use of this source code is governed by the
 //	3-clause BSD License in LICENSE.txt.
 
-#include "pointinput.h"
-#include <esp_log.h>
-#include "rtio.h"
-#include "iointerface.h"
+#include "base_includes.h"
 
 static const char* TAG = "PointInput";
 
@@ -26,6 +23,9 @@ struct PointInput *create_PointInput(const char *name, int gpio, uint8_t offset,
 	return p;
 }
 
+int point_input_enter_on(struct PointInput *m, ccrContParam);
+int point_input_enter_off(struct PointInput *m, ccrContParam);
+
 int PointInput_check_state(struct PointInput *m) {
     if (m->addr.status == IO_DONE) { // state change
         m->addr.status = IO_STABLE;
@@ -33,27 +33,17 @@ int PointInput_check_state(struct PointInput *m) {
 #if DEBUG_LOG
         ESP_LOGI(TAG,"io value is now %d (%d)", m->addr.value.u8, val);
 #endif
-
-        if (val) {
-            m->machine.state = state_PointInput_on;
-            ESP_LOGI(TAG, "%lld [%d] %s",upTime(), m->machine.id, "on");
-        }
-        else {
-            m->machine.state = state_PointInput_off;
-            ESP_LOGI(TAG, "%lld [%d] %s",upTime(), m->machine.id, "off");
-        }
+        if (val)
+            changeMachineState(m, state_PointInput_on, point_input_enter_on);
+        else
+            changeMachineState(m, state_PointInput_off, point_input_enter_off);
     }
     return 1;
 }
 
 void Init_PointInput(struct PointInput *m, const char *name, int gpio, uint8_t offset, uint8_t pos) {
 	initMachineBase(&m->machine, name);
-    m->addr.module_position = 0;
-    m->addr.io_offset = offset;
-    m->addr.io_bitpos = pos;
-    m->addr.bitlen = 1;
-    m->addr.status = IO_STABLE;
-    m->addr.io_type = iot_digin;
+    init_io_address(&m->addr, 0, offset, pos, 1, iot_digin, IO_STABLE);
 	m->machine.flags &= MASK_PASSIVE; /* not a passive machine */
     m->machine.state = state_PointInput_off;
 	m->machine.check_state = ( int(*)(MachineBase*) )PointInput_check_state;

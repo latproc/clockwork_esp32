@@ -14,7 +14,7 @@ union IOValue {
 	int32_t s32;
 };
 
-typedef enum { iot_digin, iot_digout } IOType;
+typedef enum { iot_none, iot_digin, iot_digout } IOType;
 
 struct IOAddress {
 	uint8_t module_position;
@@ -25,6 +25,8 @@ struct IOAddress {
     IOType io_type;
     IOStatus status;
 };
+
+void init_io_address(struct IOAddress *addr, uint8_t module_position, uint8_t io_offset, uint8_t io_bitpos, uint8_t bitlen, IOType io_type, IOStatus status);
 
 void rt_set_io_bit(struct IOAddress *, uint8_t val);
 void rt_set_io_byte(struct IOAddress *, uint8_t val);

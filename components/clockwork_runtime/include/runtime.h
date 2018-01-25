@@ -52,6 +52,8 @@ MachineBase *nextRunnable();
 void markPending(MachineBase *m);
 void activatePending();
 
+void changeMachineState(struct MachineBase *, int new_state, enter_func handler);
+
 uint64_t upTime();
 void delay(unsigned long usec);
 void debug(const char *);
