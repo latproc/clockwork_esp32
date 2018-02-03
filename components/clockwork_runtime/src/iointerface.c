@@ -12,6 +12,10 @@
 #include <esp_log.h>
 #include "rtio.h"
 #include "runtime.h"
+#include "driver/gpio.h"
+#include "driver/adc.h"
+#include "driver/ledc.h"
+#include "cw_ANALOGOUTPUT.h"
 
 static uint8_t *io_map = 0;
 static struct RTIOInterface *io_interface = 0;
@@ -102,15 +106,28 @@ void writeIO() {
     struct IOItem *item, *next;
     list_for_each_safe(&io_interface->io, item, next, list) {
         if (item->data->io_type == iot_digout) {
-            uint8_t cw_val = rt_get_io_bit(item->data);
-            //uint8_t val = gpio_get_level(item->gpio);
             if (item->data->status == IO_PENDING) {
-                gpio_set_level(item->gpio, cw_val);
-                ESP_LOGI(TAG,"writeIO gpio set level of %d:%d (pin %d) to %d", item->data->io_offset, item->data->io_bitpos, item->gpio, cw_val);
-                item->data->status = IO_DONE;
+                uint8_t cw_val = rt_get_io_bit(item->data);
+                //uint8_t val = gpio_get_level(item->gpio);
+                if (item->data->io_type == iot_digout) {
+                    gpio_set_level(item->gpio, cw_val);
+                    ESP_LOGI(TAG,"writeIO gpio set level of %d:%d (pin %d) to %d", item->data->io_offset, item->data->io_bitpos, item->gpio, cw_val);
+                    item->data->status = IO_DONE;
+                }
                 if (item->machine) markPending(item->machine);
             }
         }
+        else if (item->data->io_type == iot_pwm) {
+            if (item->data->status == IO_PENDING) {
+                uint16_t cw_val = rt_get_io_uint16(item->data);
+                struct cw_ANALOGOUTPUT *a_out = (struct cw_ANALOGOUTPUT*)item->machine;
+                ledc_set_duty(LEDC_HIGH_SPEED_MODE, cw_ANALOGOUTPUT_get_channel(a_out), cw_val);
+                ledc_update_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_0);
+                ESP_LOGI(TAG,"writeIO gpio set level of %d:%d (pin %d) to %d", item->data->io_offset, item->data->io_bitpos, item->gpio, cw_val);
+                item->data->status = IO_DONE;
+            }
+        }
+
     }
 }
 
@@ -153,27 +170,32 @@ void createIOMap() {
     list_for_each_safe(&io_interface->io, item, next, list) {
         ++count;
         if (item->data->bitlen == 1) {
+            if (bits == 0) { bit_offset = byte_offset++; }
             item->data->io_offset = bit_offset;
             item->data->io_bitpos = (bits++ % 8);
-            if (bits % 8 == 0) ++bit_offset;
+            if (bits % 8 == 0) { ++bit_offset; bits = 0; }
             ESP_LOGI(TAG, "%lld added io bit at %d:%d",upTime(), item->data->io_offset, item->data->io_bitpos);
         }
         else if (item->data->bitlen == 8) {
             ++bytes;
             item->data->io_offset = byte_offset;
             item->data->io_bitpos = 0;
+            ++byte_offset;
+            ESP_LOGI(TAG, "%lld added io byte at %d:%d",upTime(), item->data->io_offset, item->data->io_bitpos);
         }
         else if (item->data->bitlen == 16) {
             bytes += 2;
             item->data->io_offset = byte_offset;
             item->data->io_bitpos = 0;
             byte_offset += 2;
+            ESP_LOGI(TAG, "%lld added io word at %d:%d",upTime(), item->data->io_offset, item->data->io_bitpos);
         }
         else if (item->data->bitlen == 32) {
             bytes += 4;
             item->data->io_offset = byte_offset;
             item->data->io_bitpos = 0;
             byte_offset += 4;
+            ESP_LOGI(TAG, "%lld added io long at %d:%d",upTime(), item->data->io_offset, item->data->io_bitpos);
         }
     }
     unsigned int len = bits/8 + 1 + bytes;

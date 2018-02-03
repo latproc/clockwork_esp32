@@ -1,5 +1,8 @@
 #include "rtio.h"
 #include <esp_log.h>
+#include "driver/gpio.h"
+#include "driver/adc.h"
+#include "driver/ledc.h"
 
 extern uint8_t *io_map;
 
@@ -54,4 +57,15 @@ uint16_t rt_get_io_uint16(struct IOAddress *a) {
 uint32_t rt_get_io_uint32(struct IOAddress *a) {
     //union IOValue *value = (union IOValue *)(io_map + a->io_offset);
     return a->value.u32;
+}
+
+void setup_pwm_gpio(int channel_num, int gpio_num, int duty) {
+    ledc_channel_config_t ledc_conf;
+    ledc_conf.channel = LEDC_CHANNEL_0;
+    ledc_conf.duty = duty;
+    ledc_conf.gpio_num = gpio_num;
+    ledc_conf.intr_type = LEDC_INTR_DISABLE;
+    ledc_conf.speed_mode = LEDC_HIGH_SPEED_MODE;
+    ledc_conf.timer_sel = LEDC_TIMER_0;
+    ledc_channel_config(&ledc_conf);
 }

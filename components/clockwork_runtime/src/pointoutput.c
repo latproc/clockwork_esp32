@@ -18,9 +18,9 @@ struct PointOutput {
     struct IOAddress addr;
 };
 
-struct PointOutput *create_PointOutput(const char *name, int gpio, uint8_t offset, uint8_t pos) {
+struct PointOutput *create_PointOutput(const char *name, int gpio) {
     struct PointOutput *p = (struct PointOutput *)malloc(sizeof(struct PointOutput));
-	Init_PointOutput(p, name, gpio, offset, pos);
+	Init_PointOutput(p, name, gpio);
 	return p;
 }
 
@@ -42,9 +42,9 @@ int PointOutput_check_state(struct PointOutput *m) {
     return 1;
 }
 
-void Init_PointOutput(struct PointOutput *m, const char *name, int gpio, uint8_t offset, uint8_t pos) {
+void Init_PointOutput(struct PointOutput *m, const char *name, int gpio) {
 	initMachineBase(&m->machine, name);
-    init_io_address(&m->addr, 0, offset, pos, 1, iot_digout, IO_STABLE);
+    init_io_address(&m->addr, 0, 0, 0, 1, iot_digout, IO_STABLE);
 	m->machine.flags &= MASK_PASSIVE; /* not a passive machine */
     m->machine.state = state_PointOutput_off;
 	m->machine.check_state = ( int(*)(MachineBase*) )PointOutput_check_state;

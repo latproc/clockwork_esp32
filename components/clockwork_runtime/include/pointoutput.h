@@ -15,8 +15,8 @@
 #define state_PointOutput_on 1
 
 struct PointOutput;
-struct PointOutput *create_PointOutput(const char *name, int gpio, uint8_t offset, uint8_t pos);
-void Init_PointOutput(struct PointOutput *, const char *name, int gpio, uint8_t offset, uint8_t pos);
+struct PointOutput *create_PointOutput(const char *name, int gpio);
+void Init_PointOutput(struct PointOutput *, const char *name, int gpio);
 MachineBase *PointOutput_To_MachineBase(struct PointOutput *);
 struct IOAddress *PointOutput_getAddress(struct PointOutput *);
 void turnOn(struct PointOutput *output);

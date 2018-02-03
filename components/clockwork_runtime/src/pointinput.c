@@ -17,9 +17,9 @@ struct PointInput {
     struct IOAddress addr;
 };
 
-struct PointInput *create_PointInput(const char *name, int gpio, uint8_t offset, uint8_t pos) {
+struct PointInput *create_PointInput(const char *name, int gpio) {
     struct PointInput *p = (struct PointInput *)malloc(sizeof(struct PointInput));
-	Init_PointInput(p, name, gpio, offset, pos);
+	Init_PointInput(p, name, gpio);
 	return p;
 }
 
@@ -34,16 +34,16 @@ int PointInput_check_state(struct PointInput *m) {
         ESP_LOGI(TAG,"io value is now %d (%d)", m->addr.value.u8, val);
 #endif
         if (val)
-            changeMachineState(m, state_PointInput_on, point_input_enter_on);
+            changeMachineState(PointInput_To_MachineBase(m), state_PointInput_on, point_input_enter_on);
         else
-            changeMachineState(m, state_PointInput_off, point_input_enter_off);
+            changeMachineState(PointInput_To_MachineBase(m), state_PointInput_off, point_input_enter_off);
     }
     return 1;
 }
 
-void Init_PointInput(struct PointInput *m, const char *name, int gpio, uint8_t offset, uint8_t pos) {
+void Init_PointInput(struct PointInput *m, const char *name, int gpio) {
 	initMachineBase(&m->machine, name);
-    init_io_address(&m->addr, 0, offset, pos, 1, iot_digin, IO_STABLE);
+    init_io_address(&m->addr, 0, 0, 0, 1, iot_digin, IO_STABLE);
 	m->machine.flags &= MASK_PASSIVE; /* not a passive machine */
     m->machine.state = state_PointInput_off;
 	m->machine.check_state = ( int(*)(MachineBase*) )PointInput_check_state;

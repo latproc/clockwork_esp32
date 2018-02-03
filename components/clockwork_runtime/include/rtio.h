@@ -14,7 +14,7 @@ union IOValue {
 	int32_t s32;
 };
 
-typedef enum { iot_none, iot_digin, iot_digout } IOType;
+typedef enum { iot_none, iot_digin, iot_digout, iot_pwm, iot_adc } IOType;
 
 struct IOAddress {
 	uint8_t module_position;
@@ -37,5 +37,7 @@ uint8_t rt_get_io_bit(struct IOAddress *a);
 uint8_t rt_get_io_byte(struct IOAddress *a);
 uint16_t rt_get_io_uint16(struct IOAddress *a);
 uint32_t rt_get_io_uint32(struct IOAddress *a);
+
+void setup_pwm_gpio(int channel_num, int gpio_num, int duty);
 
 #endif
