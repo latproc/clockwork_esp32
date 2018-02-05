@@ -29,6 +29,7 @@ void Init_cw_ANALOGOUTPUT(struct cw_ANALOGOUTPUT *m, const char *name, int pin, 
   m->_module = module;
   m->_offset = offset;
   m->_pwm_channel = channel;
+  setup_pwm_gpio(channel, pin, 0);
   
   m->machine.state = 0;
   m->machine.check_state = ( int(*)(MachineBase*) )cw_ANALOGOUTPUT_check_state;
@@ -66,7 +67,7 @@ int cw_ANALOGOUTPUT_check_state(struct cw_ANALOGOUTPUT *m)
   return 1;
 }
 void cw_ANALOGOUTPUT_set_value (struct cw_ANALOGOUTPUT *output, uint16_t value) {
-    rt_set_io_bit(&output->addr, 1);
+    rt_set_io_uint16(&output->addr, value);
     output->addr.status = IO_PENDING;
 }
 int cw_ANALOGOUTPUT_get_channel(struct cw_ANALOGOUTPUT *output) {
