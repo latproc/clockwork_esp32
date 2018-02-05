@@ -37,9 +37,9 @@ init_io_address(&m->addr, 0, 0, 0, 0, iot_none, IO_STABLE);
     if (output) MachineDependencies_add(output, cw_Ramp_To_MachineBase(m));
     m->VALUE = 0;
     m->direction = 0;
-    m->end = 10000;
+    m->end = 30000;
     m->start = 1000;
-    m->step = 10;
+    m->step = 800;
     m->machine.state = state_cw_Ramp_INIT;
     m->machine.check_state = ( int(*)(MachineBase*) )cw_Ramp_check_state;
     m->machine.handle = (message_func)cw_Ramp_handle_message; // handle message from other machines
