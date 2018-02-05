@@ -7,9 +7,8 @@
 
 #include "base_includes.h"
 
-static const char* TAG = "PointInput";
-
 #define DEBUG_LOG 0
+//static const char* TAG = "PointInput";
 
 struct PointInput {
 	MachineBase machine;
@@ -34,11 +33,12 @@ int PointInput_check_state(struct PointInput *m) {
         ESP_LOGI(TAG,"io value is now %d (%d)", m->addr.value.u8, val);
 #endif
         if (val)
-            changeMachineState(PointInput_To_MachineBase(m), state_PointInput_on, point_input_enter_on);
+            changeMachineState(PointInput_To_MachineBase(m), state_PointInput_on, (enter_func)point_input_enter_on);
         else
-            changeMachineState(PointInput_To_MachineBase(m), state_PointInput_off, point_input_enter_off);
+            changeMachineState(PointInput_To_MachineBase(m), state_PointInput_off, (enter_func)point_input_enter_off);
+        return 1;
     }
-    return 1;
+    return 0;
 }
 
 void Init_PointInput(struct PointInput *m, const char *name, int gpio) {
@@ -58,13 +58,17 @@ struct IOAddress *PointInput_getAddress(struct PointInput *pi) {
 MachineBase *PointInput_To_MachineBase(struct PointInput *p) { return &p->machine; }
 
 int point_input_enter_on(struct PointInput *m, ccrContParam) {
+#if DEBUG_LOG
 	ESP_LOGI(TAG, "%lld [%d] %s",upTime(), m->machine.id, "on");
+#endif
     m->machine.execute = 0;
     return 1;
 }
 
 int point_input_enter_off(struct PointInput *m, ccrContParam) {
+#if DEBUG_LOG
 	ESP_LOGI(TAG, "%lld [%d] %s",upTime(), m->machine.id, "off");
+#endif
     m->machine.execute = 0;
     return 1;
 }

@@ -73,12 +73,13 @@ void cwrt_setup() {
     if (m->init) m->init();
     struct IOItem *item_in = IOItem_create(m, PointInput_getAddress(in1), point_in1);
 
-    ain1 = create_cw_ANALOGINPUT("AIN1", ain1_pin, 0, 0, 0);
+    ain1 = create_cw_ANALOGINPUT("AIN1", ain1_pin, 0, 0, ADC_CHANNEL_0, 0);
     assert(ain1);
     m = cw_ANALOGINPUT_To_MachineBase(ain1);
     assert(m);
     if (m->init) m->init();
     struct IOItem *item_ain1 = IOItem_create(m, cw_ANALOGINPUT_getAddress(ain1), ain1_pin);
+    item_ain1 = item_ain1; // hide compiler warning about unused variable
 
     aout1 = create_cw_ANALOGOUTPUT("AOUT1", aout1_pin, 0, 0, LEDC_CHANNEL_0);
     assert(aout1);

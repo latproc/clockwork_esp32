@@ -8,9 +8,8 @@
 #include "base_includes.h"
 #include "pointoutput.h"
 
-static const char* TAG = "PointOutput";
-
 #define DEBUG_LOG 0
+//static const char* TAG = "PointOutput";
 
 struct PointOutput {
 	MachineBase machine;
@@ -38,8 +37,9 @@ int PointOutput_check_state(struct PointOutput *m) {
             changeMachineState(PointOutput_To_MachineBase(m), state_PointOutput_on, (enter_func) point_output_enter_on);
         else
             changeMachineState(PointOutput_To_MachineBase(m), state_PointOutput_off, (enter_func) point_output_enter_off);
+        return 1;
     }
-    return 1;
+    return 0;
 }
 
 void Init_PointOutput(struct PointOutput *m, const char *name, int gpio) {
@@ -59,13 +59,17 @@ struct IOAddress *PointOutput_getAddress(struct PointOutput *pi) {
 MachineBase *PointOutput_To_MachineBase(struct PointOutput *p) { return &p->machine; }
 
 int point_output_enter_on(struct PointOutput *m, ccrContParam) {
+#if DEBUG_LOG
 	ESP_LOGI(TAG, "%lld [%d] %s",upTime(), m->machine.id, "on");
+#endif
     m->machine.execute = 0;
     return 1;
 }
 
 int point_output_enter_off(struct PointOutput *m, ccrContParam) {
+#if DEBUG_LOG
 	ESP_LOGI(TAG, "%lld [%d] %s",upTime(), m->machine.id, "off");
+#endif
     m->machine.execute = 0;
     return 1;
 }

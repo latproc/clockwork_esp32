@@ -16,11 +16,14 @@
 #include "driver/adc.h"
 #include "driver/ledc.h"
 #include "cw_ANALOGOUTPUT.h"
+#include "cw_ANALOGINPUT.h"
+
+#define DEBUG_LOG 0
+//static const char* TAG = "IOInterface";
 
 static uint8_t *io_map = 0;
 static struct RTIOInterface *io_interface = 0;
 
-static const char* TAG = "IOInterface";
 
 struct RTIOInterface {
 	struct list_head drivers;
@@ -60,7 +63,9 @@ struct RTIOInterface *RTIOInterface_get() {
     if (res == pdPASS)
         return io_interface;
     else {
+#if DEBUG_LOG
         ESP_LOGI(TAG,"RTIOInterface_get failed");
+#endif
         return 0;
     }
 }
@@ -69,7 +74,9 @@ void RTIOInterface_release() {
     assert(io_interface);
     BaseType_t res = xSemaphoreGive(io_interface->io_interface_mutex);
     if (res == pdFALSE) {
+#if DEBUG_LOG
         ESP_LOGI(TAG,"RTIOInterface_get failed to give");
+#endif
     }
 }
 
@@ -111,10 +118,12 @@ void writeIO() {
                 //uint8_t val = gpio_get_level(item->gpio);
                 if (item->data->io_type == iot_digout) {
                     gpio_set_level(item->gpio, cw_val);
+#if DEBUG_LOG
                     ESP_LOGI(TAG,"writeIO gpio set level of %d:%d (pin %d) to %d", item->data->io_offset, item->data->io_bitpos, item->gpio, cw_val);
+#endif
                     item->data->status = IO_DONE;
+                    if (item->machine) markPending(item->machine);
                 }
-                if (item->machine) markPending(item->machine);
             }
         }
         else if (item->data->io_type == iot_pwm) {
@@ -123,8 +132,11 @@ void writeIO() {
                 struct cw_ANALOGOUTPUT *a_out = (struct cw_ANALOGOUTPUT*)item->machine;
                 ledc_set_duty(LEDC_HIGH_SPEED_MODE, cw_ANALOGOUTPUT_get_channel(a_out), cw_val);
                 ledc_update_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_0);
+#if DEBUG_LOG
                 ESP_LOGI(TAG,"writeIO gpio set level of %d:%d (pin %d) to %d", item->data->io_offset, item->data->io_bitpos, item->gpio, cw_val);
+#endif
                 item->data->status = IO_DONE;
+                if (item->machine) markPending(item->machine);
             }
         }
 
@@ -145,15 +157,28 @@ void readIO() {
                 // TBD raise event
             }
         }
+        if (item->data->io_type == iot_adc) { // always read inputs
+            struct cw_ANALOGINPUT *ain = (struct cw_ANALOGINPUT*)item->machine;
+            int val = adc1_get_raw(cw_ANALOGINPUT_getChannel(ain));
+            uint8_t cw_val = rt_get_io_bit(item->data);
+            if (val != cw_val) {
+                rt_set_io_uint16(item->data, val);
+                item->data->status = IO_DONE;
+                if (item->machine) markPending(item->machine);
+                // TBD raise event
+            }
+        }
         else if (item->data->io_type == iot_digout) { // read outputs but only update clockwork if output matches current state
             uint8_t val = gpio_get_level(item->gpio);
             uint8_t cw_val = rt_get_io_bit(item->data);
-            // if (val == cw_val && item->data->status == IO_PENDING) {
-            //     ESP_LOGI(TAG,"readIO gpio change to %d done", cw_val);
-            //     item->data->status = IO_DONE;
-            //     if (item->machine) markPending(item->machine);
-            //     // TBD raise event
-            // }
+            if (val == cw_val && item->data->status == IO_PENDING) {
+#if DEBUG_LOG
+                ESP_LOGI(TAG,"readIO gpio change to %d done", cw_val);
+#endif
+                item->data->status = IO_DONE;
+                if (item->machine) markPending(item->machine);
+                // TBD raise event
+            }
         }
     }
 }
@@ -161,7 +186,9 @@ void readIO() {
 void createIOMap() {
 
     if (io_map) free(io_map);
+#if DEBUG_LOG
     ESP_LOGI(TAG,"%lld creating IO map", upTime());
+#endif
 
     struct IOItem *item, *next;
     unsigned int bits = 0, bit_offset = 0;
@@ -174,34 +201,44 @@ void createIOMap() {
             item->data->io_offset = bit_offset;
             item->data->io_bitpos = (bits++ % 8);
             if (bits % 8 == 0) { ++bit_offset; bits = 0; }
+#if DEBUG_LOG
             ESP_LOGI(TAG, "%lld added io bit at %d:%d",upTime(), item->data->io_offset, item->data->io_bitpos);
+#endif
         }
         else if (item->data->bitlen == 8) {
             ++bytes;
             item->data->io_offset = byte_offset;
             item->data->io_bitpos = 0;
             ++byte_offset;
+#if DEBUG_LOG
             ESP_LOGI(TAG, "%lld added io byte at %d:%d",upTime(), item->data->io_offset, item->data->io_bitpos);
+#endif
         }
         else if (item->data->bitlen == 16) {
             bytes += 2;
             item->data->io_offset = byte_offset;
             item->data->io_bitpos = 0;
             byte_offset += 2;
+#if DEBUG_LOG
             ESP_LOGI(TAG, "%lld added io word at %d:%d",upTime(), item->data->io_offset, item->data->io_bitpos);
+#endif
         }
         else if (item->data->bitlen == 32) {
             bytes += 4;
             item->data->io_offset = byte_offset;
             item->data->io_bitpos = 0;
             byte_offset += 4;
+#if DEBUG_LOG
             ESP_LOGI(TAG, "%lld added io long at %d:%d",upTime(), item->data->io_offset, item->data->io_bitpos);
+#endif
         }
     }
     unsigned int len = bits/8 + 1 + bytes;
     io_map = (uint8_t *)malloc(len);
     memset(io_map, 0, len);
+#if DEBUG_LOG
     ESP_LOGI(TAG, "%lld io map is %d bytes long for %d items",upTime(), len, count);
+#endif
 }
 
 void RTIOInterface(void *pvParameter) {

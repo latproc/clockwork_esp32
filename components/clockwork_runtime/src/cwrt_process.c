@@ -6,7 +6,7 @@
 
 #define DEBUG_LOG 0
 
-/* static const char* TAG = "process"; */
+//static const char* TAG = "process";
 
 void cwrt_process(unsigned long *last) {
     MachineBase *m = 0;
@@ -24,19 +24,34 @@ void cwrt_process(unsigned long *last) {
             while ( (m = nextRunnable()) != 0 ) {
                 if (m) {
 #if DEBUG_LOG
-                  ESP_LOGI(TAG,"%lld running machine [%d]", upTime(), m->id);
+                    ESP_LOGI(TAG,"%lld running machine [%d]", upTime(), m->id);
 #endif
-                  m->TIMER = upTime() - m->START;
-                  if (m->executing(m)) {
-                      m->execute(m, &(m->ctx) );
-                      markPending(m);
-                  }
-                  else if (m->check_state) {
-                      m->check_state(m);
-                  }
+                    m->TIMER = upTime() - m->START;
+                    struct ActionListItem *next_action;
+                    next_action = list_top(&m->actions, struct ActionListItem, list);
+                    if (m->executing(m)) {
+                        m->execute(m, &(m->ctx) );
+                        markPending(m);
+                    }
+                    else if (next_action) {
 #if DEBUG_LOG
-                  else
-                      ESP_LOGI(TAG,"%lld running machine [%d]", upTime(), m->id);
+                        ESP_LOGI(TAG,"starting new action on %s", m->name);
+#endif
+                        next_action = list_pop(&m->actions, struct ActionListItem, list);
+                        m->execute = next_action->action;
+                        m->execute(m, &(m->ctx) );
+                        markPending(m);
+                    }
+                    else if (m->check_state && m->check_state(m)) { // state change
+                        struct MachineListItem *item, *next;
+                        list_for_each_safe(&m->depends, item, next, list) {
+                        if (item->machine->handle) 
+                           item->machine->handle(item->machine, m, m->state);
+                        }
+                    }
+#if DEBUG_LOG
+                    else
+                        ESP_LOGI(TAG,"%lld running machine [%d]", upTime(), m->id);
 #endif
                 }
             }

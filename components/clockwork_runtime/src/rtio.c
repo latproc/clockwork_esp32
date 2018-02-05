@@ -4,9 +4,10 @@
 #include "driver/adc.h"
 #include "driver/ledc.h"
 
-extern uint8_t *io_map;
+#define DEBUG_LOG 0
+//static const char* TAG = "RTIO";
 
-static const char* TAG = "RTIO";
+extern uint8_t *io_map;
 
 void init_io_address(struct IOAddress *addr, uint8_t module_position, uint8_t offset, uint8_t pos, uint8_t bitlen, IOType io_type, IOStatus status) {
     addr->module_position = module_position;
@@ -18,7 +19,9 @@ void init_io_address(struct IOAddress *addr, uint8_t module_position, uint8_t of
 }
 
 void rt_set_io_bit(struct IOAddress *a, uint8_t val) {
+#if DEBUG_LOG
 	ESP_LOGI(TAG, "setting bit %d:%d to %d",a->io_offset, a->io_bitpos, val);
+#endif
     if (val)
         a->value.u8 |= (1 << a->io_bitpos);
     else

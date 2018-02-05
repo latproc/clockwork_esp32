@@ -6,6 +6,7 @@
 #include <freertos/task.h>
 #include <stdlib.h>
 #include <freertos/semphr.h>
+#include <ccan/list/list.h>
 #include <inttypes.h>
 #include "coroutine.h"
 
@@ -25,9 +26,12 @@ void cwrt_process(unsigned long *);
 
 struct MachineBase;
 typedef int (*enter_func)(struct MachineBase *, ccrContParam);
+typedef int (*message_func)(struct MachineBase *, struct MachineBase *, int state);
 
 typedef struct MachineBase {
 	struct MachineBase *p_next;
+	struct list_head depends;
+	struct list_head actions;
     const char *name;
     unsigned int id;
 	unsigned char flags;
@@ -36,9 +40,20 @@ typedef struct MachineBase {
     ccrContext ctx;
 	void (*init)();
 	int (*executing)(struct MachineBase *);
-	enter_func execute;
+	enter_func execute; // the currently executing action
+	message_func handle; // handle messages
 	int (*check_state)(struct MachineBase *);
 } MachineBase;
+
+struct MachineListItem {
+    struct list_node list;
+	struct MachineBase *machine;
+};
+
+struct ActionListItem {
+    struct list_node list;
+	enter_func action;
+};
 
 MachineBase *getMachineIterator();
 MachineBase *nextMachine(MachineBase *);
@@ -53,6 +68,11 @@ void markPending(MachineBase *m);
 void activatePending();
 
 void changeMachineState(struct MachineBase *, int new_state, enter_func handler);
+
+void MachineDependencies_add(struct MachineBase *machine, struct MachineBase *item);
+void MachineActions_add(struct MachineBase *machine, enter_func f);
+void NotifyDependents_state_change(struct MachineBase *machine, int state); // this machine changed state
+void NotifyDependents(struct MachineBase *machine); // this machine changed a property
 
 uint64_t upTime();
 void delay(unsigned long usec);

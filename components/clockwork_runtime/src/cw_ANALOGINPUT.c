@@ -11,20 +11,22 @@ struct cw_ANALOGINPUT
   MachineBase *_module;
   int _offset;
   MachineBase *_filter_settings;
+  int _adc_channel;
 };
 int cw_ANALOGINPUT_check_state(struct cw_ANALOGINPUT *m);
-struct cw_ANALOGINPUT *create_cw_ANALOGINPUT(const char *name, int pin, MachineBase *module, int offset, MachineBase *filter_settings)
+struct cw_ANALOGINPUT *create_cw_ANALOGINPUT(const char *name, int pin, MachineBase *module, int offset, int channel, MachineBase *filter_settings)
 {
   struct cw_ANALOGINPUT *p = (struct cw_ANALOGINPUT *)malloc(sizeof(struct cw_ANALOGINPUT));
-  Init_cw_ANALOGINPUT(p, name, pin, module, offset, filter_settings);
+  Init_cw_ANALOGINPUT(p, name, pin, module, offset, channel, filter_settings);
   return p;
 }
-void Init_cw_ANALOGINPUT(struct cw_ANALOGINPUT *m, const char *name, int pin, MachineBase *module, int offset, MachineBase *filter_settings)
+void Init_cw_ANALOGINPUT(struct cw_ANALOGINPUT *m, const char *name, int pin, MachineBase *module, int offset, int channel, MachineBase *filter_settings)
 {
   initMachineBase(&m->machine, name);
   init_io_address(&m->addr, 0, 0, 0,  16, iot_none, IO_STABLE);
   m->_module = module;
   m->_offset = offset;
+  m->_adc_channel = channel;
   m->_filter_settings = filter_settings;
   m->machine.state = 0;
   m->machine.check_state = ( int(*)(MachineBase*) )cw_ANALOGINPUT_check_state;
@@ -33,6 +35,9 @@ void Init_cw_ANALOGINPUT(struct cw_ANALOGINPUT *m, const char *name, int pin, Ma
 struct IOAddress *cw_ANALOGINPUT_getAddress(struct cw_ANALOGINPUT *p)
 {
   return (p->addr.io_type == iot_none) ? 0 : &p->addr;
+}
+int cw_ANALOGINPUT_getChannel(struct cw_ANALOGINPUT *p) {
+  return p->_adc_channel;
 }
 MachineBase *cw_ANALOGINPUT_To_MachineBase(struct cw_ANALOGINPUT *p)
 {

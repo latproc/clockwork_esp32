@@ -10,9 +10,6 @@
 
 static const char* TAG = "Ex1";
 
-#define state_Pulse_on 1
-#define state_Pulse_off 2
-
 /* Pulse MACHINE {  */
 struct Pulse {
 	MachineBase machine;
@@ -41,7 +38,7 @@ int Pulse_check_state(struct Pulse *m) {
 	if (found == 0) { found = state_Pulse_off; }
 	if (found && found != m->machine.state) {
 		//ESP_LOGI(TAG, "%lld [%d] %s",upTime(), m->machine.id, (found == state_Pulse_on) ? "on" : "off" );
-        changeMachineState(&m->machine, found, (found == state_Pulse_on) ? pulse_enter_on : pulse_enter_off);
+        changeMachineState(&m->machine, found, (enter_func)((found == state_Pulse_on) ? pulse_enter_on : pulse_enter_off));
         if (found == state_Pulse_off) {
             struct RTScheduler *scheduler = RTScheduler_get();
             while (!scheduler) {
@@ -62,6 +59,7 @@ void Init_Pulse(struct Pulse *m, const char *name, struct PointOutput *out) {
 	m->machine.flags &= MASK_PASSIVE; /* not a passive machine */
 	m->machine.check_state = ( int(*)(MachineBase*) )Pulse_check_state;
     m->out = out;
+    if (out) MachineDependencies_add(PointOutput_To_MachineBase(out), Pulse_To_MachineBase(m));
 	markPending(&m->machine);
     assert(xSemaphoreGiveRecursive(runtime_mutex) == pdFAIL);
 }

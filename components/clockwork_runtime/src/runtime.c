@@ -153,6 +153,8 @@ int noAutoStateChanges(MachineBase*m) { return 0; }
 
 void initMachineBase(MachineBase *m, const char *name) {
 	m->p_next = first_machine;
+    list_head_init(&m->depends);
+    list_head_init(&m->actions);
     m->name = name;
 	first_machine = m;
     m->id = next_id++;
@@ -162,8 +164,10 @@ void initMachineBase(MachineBase *m, const char *name) {
 	m->state = state_INIT;
 	m->init = 0;
     m->ctx = 0;
+    
 	m->executing = stateExecutionStage;
     m->execute = 0;
+    m->handle = 0;
 	m->check_state = noAutoStateChanges;
 }
 
@@ -183,5 +187,35 @@ void changeMachineState(struct MachineBase *m, int new_state, enter_func handler
         // TODO: publish event change
         markPending(m);
     }
+}
+
+void MachineDependencies_add(struct MachineBase *machine, struct MachineBase *dependent) {
+    struct MachineListItem *item = (struct MachineListItem *)malloc(sizeof(struct MachineListItem));
+    item->machine = dependent;
+    list_add(&machine->depends, &item->list);
+    ESP_LOGI(TAG,"%lld %s has dependent %s", upTime(), machine->name, dependent->name);
+}
+
+void MachineActions_add(struct MachineBase *machine, enter_func f) {
+    struct ActionListItem *item = (struct ActionListItem *)malloc(sizeof(struct ActionListItem));
+    item->action = f;
+    list_add_tail(&machine->actions, &item->list);
+    markPending(machine);
+}
+
+void NotifyDependents_state_change(struct MachineBase *machine, int state) {
+    struct MachineListItem *item, *next;
+    list_for_each_safe(&machine->depends, item, next, list) {
+        if (item->machine) if (item->machine->handle) item->machine->handle(item->machine, machine, state);
+    }
+
+}
+
+void NotifyDependents(struct MachineBase *machine) {
+    struct MachineListItem *item, *next;
+    list_for_each_safe(&machine->depends, item, next, list) {
+        if (item->machine) markPending(item->machine);
+    }
+
 }
 
