@@ -39,6 +39,7 @@ void cwrt_process(unsigned long *last) {
 #endif
                         next_action = list_pop(&m->actions, struct ActionListItem, list);
                         m->execute = next_action->action;
+                        free(next_action);
                         m->execute(m, &(m->ctx) );
                         markPending(m);
                     }
