@@ -33,13 +33,13 @@ int Pulse_check_state(struct Pulse *m) {
 	int found = 0;
     long delay_time = 50;
     /* on WHEN SELF IS off AND TIMER>=1000; */
-	if (m->machine.state == state_Pulse_off && m->machine.TIMER >= delay_time) found = state_Pulse_on;
+	if (m->machine.state == state_cw_Pulse_off && m->machine.TIMER >= delay_time) found = state_cw_Pulse_on;
     /* off DEFAULT; */
-	if (found == 0) { found = state_Pulse_off; }
+	if (found == 0) { found = state_cw_Pulse_off; }
 	if (found && found != m->machine.state) {
-		//ESP_LOGI(TAG, "%lld [%d] %s",upTime(), m->machine.id, (found == state_Pulse_on) ? "on" : "off" );
-        changeMachineState(&m->machine, found, (enter_func)((found == state_Pulse_on) ? pulse_enter_on : pulse_enter_off));
-        if (found == state_Pulse_off) {
+		//ESP_LOGI(TAG, "%lld [%d] %s",upTime(), m->machine.id, (found == state_cw_Pulse_on) ? "on" : "off" );
+        changeMachineState(&m->machine, found, (enter_func)((found == state_cw_Pulse_on) ? pulse_enter_on : pulse_enter_off));
+        if (found == state_cw_Pulse_off) {
             struct RTScheduler *scheduler = RTScheduler_get();
             while (!scheduler) {
                 taskYIELD();

@@ -1,10 +1,9 @@
 
 #include "base_includes.h"
 #include "cw_Ramp.h"
-#include "ex1.h"
-#include "cw_ANALOGOUTPUT.h"
 static const char* TAG = "Ramp";
 #define DEBUG_LOG 0
+
 #define Value int
 struct cw_Ramp {
 	MachineBase machine;
@@ -25,45 +24,35 @@ struct cw_Ramp *create_cw_Ramp(const char *name, MachineBase *clock, MachineBase
 	Init_cw_Ramp(p, name, clock, output);
 	return p;
 }
-
-int cw_Ramp_enter_INIT(struct cw_Ramp *m, ccrContParam) {// INIT 
-	m->VALUE =  m->start;
-	m->direction =  1;
-	m->machine.execute = 0; 
-	return 1;
-}
-int cw_Ramp_enter_top(struct cw_Ramp *m, ccrContParam) {// top 
-	m->VALUE =  m->end;
-	m->direction =  -1;
-	m->machine.execute = 0; 
-	return 1; 
-}
-int cw_Ramp_enter_bottom(struct cw_Ramp *m, ccrContParam) {// bottom 
-	m->VALUE =  m->start;
-	m->direction =  1;
-	m->machine.execute = 0; 
-	return 1;
-}
-int cw_Ramp_enter_rising(struct cw_Ramp *m, ccrContParam) {
+int cw_Ramp_INIT_enter(struct cw_Ramp *m, ccrContParam) {// INIT 
+	m->VALUE = m->start;
+	m->direction = 1;
 	m->machine.execute = 0;
 	return 1;
 }
-int cw_Ramp_enter_falling(struct cw_Ramp *m, ccrContParam) {
-	m->machine.execute = 0;
-	return 1;
-}
-int cw_Ramp_enter_stopped(struct cw_Ramp *m, ccrContParam) {
+int cw_Ramp_bottom_enter(struct cw_Ramp *m, ccrContParam) {// bottom 
+	m->VALUE = m->start;
+	m->direction = 1;
 	m->machine.execute = 0;
 	return 1;
 }
 int cw_Ramp_clock_on_enter(struct cw_Ramp *m, ccrContParam) {// clock.on_enter 
-  m->VALUE = m->VALUE + ( m->direction *  m->step );
-  cw_ANALOGOUTPUT_set_value(m->_output, m->VALUE);
-  ESP_LOGI(TAG,"got clock, step: %d, dir: %d, now: %d", m->step, m->direction, m->VALUE);
-  m->machine.execute = 0;
-  return 1;
+	m->VALUE = (m->VALUE + (m->direction * m->step));
+	m->machine.execute = 0;
+	return 1;
 }
-
+int cw_Ramp_top_enter(struct cw_Ramp *m, ccrContParam) {// top 
+	m->VALUE = m->end;
+	m->direction = -1;
+	m->machine.execute = 0;
+	return 1;
+}
+int cw_Ramp_handle_message(struct MachineBase *obj, struct MachineBase *source, int state) {
+	struct cw_Ramp *m = (struct cw_Ramp *)obj;
+	 if (source == m->_clock && state == 3)
+		MachineActions_add(m, (enter_func)cw_Ramp_clock_on_enter);
+	return 1;
+}
 void Init_cw_Ramp(struct cw_Ramp *m, const char *name, MachineBase *clock, MachineBase *output) {
 	initMachineBase(&m->machine, name);
 	init_io_address(&m->addr, 0, 0, 0, 0, iot_none, IO_STABLE);
@@ -78,8 +67,7 @@ void Init_cw_Ramp(struct cw_Ramp *m, const char *name, MachineBase *clock, Machi
 	m->step = 800;
 	m->machine.state = state_cw_Ramp_INIT;
 	m->machine.check_state = ( int(*)(MachineBase*) )cw_Ramp_check_state;
-	m->machine.handle = (message_func)cw_Ramp_handle_message; // handle message from other machines
-	MachineActions_add(cw_Ramp_To_MachineBase(m), (enter_func)cw_Ramp_enter_INIT);
+	m->machine.handle = (message_func)cw_Ramp_handle_message; // handle message from other machines	MachineActions_add(cw_Ramp_To_MachineBase(m), (enter_func)cw_Ramp_INIT_enter);
 	markPending(&m->machine);
 }
 struct IOAddress *cw_Ramp_getAddress(struct cw_Ramp *p) {
@@ -90,27 +78,24 @@ int cw_Ramp_check_state(struct cw_Ramp *m) {
 	int new_state = 0; enter_func new_state_enter = 0;
 	if (((m->VALUE >= m->end) && (m->direction > 0))) {
 		new_state = state_cw_Ramp_top;
-		new_state_enter = (enter_func)cw_Ramp_enter_top;
+		new_state_enter = (enter_func)cw_Ramp_top_enter;
 	}
 	else
 	if (((m->VALUE <= m->start) && (m->direction < 0))) {
 		new_state = state_cw_Ramp_bottom;
-		new_state_enter = (enter_func)cw_Ramp_enter_bottom;
+		new_state_enter = (enter_func)cw_Ramp_bottom_enter;
 	}
 	else
 	if (((m->VALUE < m->end) && (m->direction > 0))) {
 		new_state = state_cw_Ramp_rising;
-		new_state_enter = (enter_func)cw_Ramp_enter_rising;
 	}
 	else
 	if (((m->VALUE > m->start) && (m->direction < 0))) {
 		new_state = state_cw_Ramp_falling;
-		new_state_enter = (enter_func)cw_Ramp_enter_falling;
 	}
 	else
 	{
 		new_state = state_cw_Ramp_stopped;
-		new_state_enter = (enter_func)cw_Ramp_enter_stopped;
 	}
 	if (new_state != m->machine.state) {
 		changeMachineState(cw_Ramp_To_MachineBase(m), new_state, new_state_enter);
@@ -118,14 +103,3 @@ int cw_Ramp_check_state(struct cw_Ramp *m) {
 	}
 	return 0;
 }
-int cw_Ramp_handle_message(struct MachineBase *ramp, struct MachineBase *machine, int state) {
-	struct cw_Ramp *cw_ramp = (struct cw_Ramp *)ramp;
-	if (cw_ramp->_clock == machine && state == state_Pulse_on) {
-#if DEBUG_LOG
-		ESP_LOGI(TAG,"handling clock pulse %d", state);
-#endif
-		MachineActions_add(ramp, (enter_func)cw_Ramp_clock_on_enter);
-	}
-	return 1;
-}
-

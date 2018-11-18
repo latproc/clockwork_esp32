@@ -1,8 +1,9 @@
 #ifndef __EX1_H__
 #define __EX1_H__
 
-#define state_Pulse_on 1
-#define state_Pulse_off 2
+#define state_cw_Pulse_INIT 1
+#define state_cw_Pulse_on 3
+#define state_cw_Pulse_off 2
 
 struct Pulse;
 struct PointOutput;

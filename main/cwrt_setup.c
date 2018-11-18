@@ -33,7 +33,7 @@ struct cw_Ramp *ramp0;
 #define point_in1 23
 #define point_out1 22
 #define ain1_pin ADC1_CHANNEL_6
-#define aout1_pin 25
+#define aout1_pin 33
 
 #define V_REF 1100
 
