@@ -39,6 +39,7 @@ int cw_Ramp_bottom_enter(struct cw_Ramp *m, ccrContParam) {// bottom
 int cw_Ramp_clock_on_enter(struct cw_Ramp *m, ccrContParam) {// clock.on_enter 
 	m->VALUE = (m->VALUE + (m->direction * m->step));
 	m->machine.execute = 0;
+	ESP_LOGI(TAG, "%d [%d]",m->machine.id, m->VALUE);
 	return 1;
 }
 int cw_Ramp_top_enter(struct cw_Ramp *m, ccrContParam) {// top 

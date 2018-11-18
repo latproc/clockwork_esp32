@@ -89,15 +89,15 @@ void cwrt_setup() {
     struct IOItem *item_aout1 = IOItem_create(m, cw_ANALOGOUTPUT_getAddress(aout1), aout1_pin);
 
     // create clockwork machines
-    flasher0 = create_Pulse("F0", out1);
+    flasher0 = create_cw_Pulse("F0", out1);
     assert(flasher0);
-    m = Pulse_To_MachineBase(flasher0);
+    m = cw_Pulse_To_MachineBase(flasher0);
     assert(m);
     if (m->init) m->init();
     ESP_LOGI(TAG,"%lld created machine [%d] %s", upTime(), m->id, m->name);
 
     // create clockwork machines
-    ramp0 = create_cw_Ramp("R0", Pulse_To_MachineBase(flasher0), cw_ANALOGOUTPUT_To_MachineBase(aout1));
+    ramp0 = create_cw_Ramp("R0", cw_Pulse_To_MachineBase(flasher0), cw_ANALOGOUTPUT_To_MachineBase(aout1));
     assert(ramp0);
     m = cw_Ramp_To_MachineBase(ramp0);
     assert(m);
@@ -107,7 +107,7 @@ void cwrt_setup() {
     //
     // flasher1 = create_Pulse("F1");
     // assert(flasher1);
-    // m = Pulse_To_MachineBase(flasher1);
+    // m = cw_Pulse_To_MachineBase(flasher1);
     // assert(m);
     // if (m->init) m->init();
     // ESP_LOGI(TAG,"%lld created machine [%d] %s", upTime(), m->id, m->name);
