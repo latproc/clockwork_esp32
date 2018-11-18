@@ -5,11 +5,11 @@
 #include <freertos/FreeRTOS.h>
 #include <esp_log.h>
 
-#include "ex1.h"
 #include <pointinput.h>
 #include <pointoutput.h>
 #include <cw_ANALOGINPUT.h>
 #include <cw_ANALOGOUTPUT.h>
+#include "cw_Pulse.h"
 #include "cw_Ramp.h"
 
 #include <iointerface.h>

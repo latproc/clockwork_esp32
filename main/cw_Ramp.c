@@ -67,7 +67,8 @@ void Init_cw_Ramp(struct cw_Ramp *m, const char *name, MachineBase *clock, Machi
 	m->step = 800;
 	m->machine.state = state_cw_Ramp_INIT;
 	m->machine.check_state = ( int(*)(MachineBase*) )cw_Ramp_check_state;
-	m->machine.handle = (message_func)cw_Ramp_handle_message; // handle message from other machines	MachineActions_add(cw_Ramp_To_MachineBase(m), (enter_func)cw_Ramp_INIT_enter);
+	m->machine.handle = (message_func)cw_Ramp_handle_message; // handle message from other machines
+	MachineActions_add(cw_Ramp_To_MachineBase(m), (enter_func)cw_Ramp_INIT_enter);
 	markPending(&m->machine);
 }
 struct IOAddress *cw_Ramp_getAddress(struct cw_Ramp *p) {
