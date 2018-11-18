@@ -10,7 +10,7 @@ struct cw_Pulse {
 	int gpio_pin;
 	struct IOAddress addr;
 	MachineBase *_out;
-	Value delay; // 1000
+	Value delay; // 100
 };
 int cw_Pulse_handle_message(struct MachineBase *ramp, struct MachineBase *machine, int state);
 int cw_Pulse_check_state(struct cw_Pulse *m);
@@ -65,18 +65,16 @@ int cw_Pulse_check_state(struct cw_Pulse *m) {
 		new_state = state_cw_Pulse_off;
 		new_state_enter = (enter_func)cw_Pulse_off_enter;
 	}
-	if (new_state != m->machine.state) {
+	if (new_state && new_state != m->machine.state) {
 		changeMachineState(cw_Pulse_To_MachineBase(m), new_state, new_state_enter);
-        if (new_state == state_cw_Pulse_off) {
-            struct RTScheduler *scheduler = RTScheduler_get();
-            while (!scheduler) {
-                taskYIELD();
-                scheduler = RTScheduler_get();
-            }
-            if (m->delay > m->machine.TIMER) {
-                RTScheduler_add(scheduler, ScheduleItem_create(m->delay - m->machine.TIMER, &m->machine));
-                RTScheduler_release();
-            }
+        struct RTScheduler *scheduler = RTScheduler_get();
+        while (!scheduler) {
+            taskYIELD();
+            scheduler = RTScheduler_get();
+        }
+        if (m->delay > m->machine.TIMER) {
+            RTScheduler_add(scheduler, ScheduleItem_create(m->delay - m->machine.TIMER, &m->machine));
+            RTScheduler_release();
         }
     }
     if (m->machine.execute) markPending(&m->machine);
