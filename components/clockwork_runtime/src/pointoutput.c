@@ -9,7 +9,9 @@
 #include "pointoutput.h"
 
 #define DEBUG_LOG 0
-//static const char* TAG = "PointOutput";
+#if DEBUG_LOG
+static const char* TAG = "PointOutput";
+#endif
 
 struct PointOutput {
 	MachineBase machine;
@@ -25,7 +27,19 @@ struct PointOutput *create_PointOutput(const char *name, int gpio) {
 
 int point_output_enter_on(struct PointOutput *m, ccrContParam);
 int point_output_enter_off(struct PointOutput *m, ccrContParam);
-
+int point_output_handle_message(struct MachineBase *obj, struct MachineBase *source, int message) {
+#if DEBUG_LOG
+    ESP_LOGI(TAG,"%lld [%d] handling message [%d]", upTime(), obj->id, message);
+#endif
+   
+	if (message == cw_message_turnOn) {
+        
+		turnOn( (struct PointOutput *)obj);
+    }
+    else if (message == cw_message_turnOff)
+		turnOff( (struct PointOutput *)obj);
+	return 1;
+}
 int PointOutput_check_state(struct PointOutput *m) {
     if (m->addr.status == IO_DONE) { // state change
         m->addr.status = IO_STABLE;
@@ -48,6 +62,7 @@ void Init_PointOutput(struct PointOutput *m, const char *name, int gpio) {
 	m->machine.flags &= MASK_PASSIVE; /* not a passive machine */
     m->machine.state = state_PointOutput_off;
 	m->machine.check_state = ( int(*)(MachineBase*) )PointOutput_check_state;
+    m->machine.handle = (message_func)point_output_handle_message;
 	markPending(&m->machine);
     assert(xSemaphoreGiveRecursive(runtime_mutex) == pdFAIL);
 }

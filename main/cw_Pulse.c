@@ -20,24 +20,25 @@ struct cw_Pulse *create_cw_Pulse(const char *name, MachineBase *out) {
 	return p;
 }
 int cw_Pulse_off_enter(struct cw_Pulse *m, ccrContParam) {// off 
-	//LOG (empty);
-	//SendMessageActionTemplate turnOff out;
-    //ESP_LOGI(TAG, "%lld [%d] %s",upTime(), m->machine.id, "off" );
-	turnOn(m->_out);
+	ESP_LOGI(TAG, "%lld %s", upTime(), "off");
+	cw_send(m->_out, m, cw_message_turnOn);
 	m->machine.execute = 0;
 	return 1;
 }
 int cw_Pulse_on_enter(struct cw_Pulse *m, ccrContParam) {// on 
-	//LOG (empty);
-	//SendMessageActionTemplate turnOn out;
-    //ESP_LOGI(TAG, "%lld [%d] %s",upTime(), m->machine.id, "on" );
-	turnOff(m->_out);
+	ESP_LOGI(TAG, "%lld %s", upTime(), "on");
+	cw_send(m->_out, m, cw_message_turnOff);
 	m->machine.execute = 0;
 	return 1;
 }
 int cw_Pulse_handle_message(struct MachineBase *obj, struct MachineBase *source, int state) {
 	struct cw_Pulse *m = (struct cw_Pulse *)obj;
 	return 1;
+}
+uint64_t cw_Pulse_next_trigger_time(struct cw_Pulse *m) {
+  uint64_t val = m->delay;
+  uint64_t res = val;
+  return res;
 }
 void Init_cw_Pulse(struct cw_Pulse *m, const char *name, MachineBase *out) {
 	initMachineBase(&m->machine, name);
@@ -66,20 +67,18 @@ int cw_Pulse_check_state(struct cw_Pulse *m) {
 		new_state_enter = (enter_func)cw_Pulse_off_enter;
 	}
 	if (new_state && new_state != m->machine.state) {
-		changeMachineState(cw_Pulse_To_MachineBase(m), new_state, new_state_enter);
-        struct RTScheduler *scheduler = RTScheduler_get();
-        while (!scheduler) {
-            taskYIELD();
-            scheduler = RTScheduler_get();
-        }
-        if (m->delay > m->machine.TIMER) {
-            RTScheduler_add(scheduler, ScheduleItem_create(m->delay - m->machine.TIMER, &m->machine));
-            RTScheduler_release();
-        }
-    }
-    if (m->machine.execute) markPending(&m->machine);
-    return 1;
-	
-    //ESP_LOGI(TAG, "%ld [%d] %s",m->machine.TIMER, m->machine.id, (new_state == state_cw_Pulse_on) ? "on" : "off" );
+		changeMachineState(cw_Pulse_To_MachineBase(m), new_state, new_state_enter); // TODO: fix me
+		uint64_t delay = cw_Pulse_next_trigger_time(m);
+		struct RTScheduler *scheduler = RTScheduler_get();
+		while (!scheduler) {
+			taskYIELD();
+			scheduler = RTScheduler_get();
+		}
+		if (delay > m->machine.TIMER) RTScheduler_add(scheduler, ScheduleItem_create(delay - m->machine.TIMER, &m->machine));
+		else
+			if (m->machine.execute) markPending(&m->machine);
+		RTScheduler_release();
+		return 1;
+	}
 	return 0;
 }

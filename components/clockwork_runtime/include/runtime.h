@@ -13,6 +13,11 @@
 #define FLAG_PASSIVE 0x1
 #define MASK_PASSIVE 0xfe
 #define state_INIT 0
+#define UNDEFINED_STATE -1
+
+// standard messages
+#define cw_message_turnOff -100
+#define cw_message_turnOn -101
 
 extern SemaphoreHandle_t scheduler_sem;
 extern SemaphoreHandle_t process_sem;
@@ -32,6 +37,7 @@ typedef struct MachineBase {
 	struct MachineBase *p_next;
 	struct list_head depends;
 	struct list_head actions;
+	struct list_head messages;
     const char *name;
     unsigned int id;
 	unsigned char flags;
@@ -53,6 +59,12 @@ struct MachineListItem {
 struct ActionListItem {
     struct list_node list;
 	enter_func action;
+};
+
+struct MessageListItem {
+	struct list_node list;
+	struct MachineBase *from;
+	int message;
 };
 
 MachineBase *getMachineIterator();
@@ -78,5 +90,7 @@ uint64_t upTime();
 void delay(unsigned long usec);
 void debug(const char *);
 void debugInt(const char *, int);
+
+void cw_send(struct MachineBase *to, struct MachineBase *from, int message);
 
 #endif

@@ -6,7 +6,7 @@
 
 #define DEBUG_LOG 0
 
-//static const char* TAG = "process";
+static const char* TAG = "process";
 
 void cwrt_process(unsigned long *last) {
     MachineBase *m = 0;
@@ -43,11 +43,25 @@ void cwrt_process(unsigned long *last) {
                         m->execute(m, &(m->ctx) );
                         markPending(m);
                     }
+                    else if (list_top(&m->messages, struct MessageListItem, list)) {
+                        struct MessageListItem *item;
+                        item = list_pop(&m->messages, struct MessageListItem, list);
+                        while (item) {
+                            if (m->handle) {
+#if DEBUG_LOG
+                                ESP_LOGI(TAG,"%lld sending [%d] to [%d]", upTime(), item->message, m->id);
+#endif
+                                m->handle(m, item->from, item->message);
+                            }
+                            free(item);
+                            item = list_pop(&m->messages, struct MessageListItem, list);
+                        }
+                    }
                     else if (m->check_state && m->check_state(m)) { // state change
                         struct MachineListItem *item, *next;
                         list_for_each_safe(&m->depends, item, next, list) {
-                        if (item->machine->handle) 
-                           item->machine->handle(item->machine, m, m->state);
+                            if (item->machine->handle) 
+                                item->machine->handle(item->machine, m, m->state);
                         }
                     }
 #if DEBUG_LOG

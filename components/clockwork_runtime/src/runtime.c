@@ -12,6 +12,8 @@ SemaphoreHandle_t process_sem = 0;
 SemaphoreHandle_t io_interface_sem = 0;
 SemaphoreHandle_t runtime_mutex = 0;
 
+struct list_node global_messages;
+
 void debug(const char *s) {
    ESP_LOGI(TAG,"%lld %s", upTime(), s);
 }
@@ -34,6 +36,7 @@ void rt_init(void) {
     assert(io_interface_sem);
     runtime_mutex = xSemaphoreCreateRecursiveMutex();
     assert(runtime_mutex);
+    list_head_init(&global_messages);
 }
 
 MachineBase *getMachineIterator() {
@@ -155,6 +158,7 @@ void initMachineBase(MachineBase *m, const char *name) {
 	m->p_next = first_machine;
     list_head_init(&m->depends);
     list_head_init(&m->actions);
+    list_head_init(&m->messages);
     m->name = name;
 	first_machine = m;
     m->id = next_id++;
@@ -216,6 +220,16 @@ void NotifyDependents(struct MachineBase *machine) {
     list_for_each_safe(&machine->depends, item, next, list) {
         if (item->machine) markPending(item->machine);
     }
-
 }
 
+void cw_send(struct MachineBase *to, struct MachineBase *from, int message) {
+    struct MessageListItem *item = (struct MessageListItem *)malloc(sizeof(struct MessageListItem));
+    item->from = from;
+    item->message = message;
+    if (to) {
+        list_add_tail(&to->messages, &item->list);
+        markPending(to);
+    }
+    else
+        list_add_tail(&global_messages, &item->list);
+}
