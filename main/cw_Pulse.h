@@ -2,6 +2,9 @@
 #define __cw_Pulse_h__
 
 #include "runtime.h"
+#define state_cw_Pulse_INIT 1
+#define state_cw_Pulse_on 3
+#define state_cw_Pulse_off 2
 #define Value int
 struct cw_Pulse {
 	MachineBase machine;
@@ -10,10 +13,6 @@ struct cw_Pulse {
 	MachineBase *_out;
 	Value delay; // 100
 };
-
-#define state_cw_Pulse_INIT 1
-#define state_cw_Pulse_on 3
-#define state_cw_Pulse_off 2
 struct IOAddress *cw_Pulse_getAddress(struct cw_Pulse *p);
 struct cw_Pulse *create_cw_Pulse(const char *name, MachineBase *out);
 void Init_cw_Pulse(struct cw_Pulse * , const char *name, MachineBase *out);

@@ -1,22 +1,9 @@
 
 #include "base_includes.h"
+#include "cw_message_ids.h"
 #include "cw_Ramp.h"
 static const char* TAG = "Ramp";
 #define DEBUG_LOG 0
-
-#define Value int
-struct cw_Ramp {
-	MachineBase machine;
-	int gpio_pin;
-	struct IOAddress addr;
-	MachineBase *_clock;
-	MachineBase *_output;
-	Value VALUE; // 0
-	Value direction; // 0
-	Value end; // 30000
-	Value start; // 1000
-	Value step; // 800
-};
 int cw_Ramp_handle_message(struct MachineBase *ramp, struct MachineBase *machine, int state);
 int cw_Ramp_check_state(struct cw_Ramp *m);
 struct cw_Ramp *create_cw_Ramp(const char *name, MachineBase *clock, MachineBase *output) {
@@ -39,7 +26,6 @@ int cw_Ramp_bottom_enter(struct cw_Ramp *m, ccrContParam) {// bottom
 int cw_Ramp_clock_on_enter(struct cw_Ramp *m, ccrContParam) {// clock.on_enter 
 	m->VALUE = (m->VALUE + (m->direction * m->step));
 	m->machine.execute = 0;
-	ESP_LOGI(TAG, "%d [%d]",m->machine.id, m->VALUE);
 	return 1;
 }
 int cw_Ramp_top_enter(struct cw_Ramp *m, ccrContParam) {// top 
@@ -76,6 +62,7 @@ struct IOAddress *cw_Ramp_getAddress(struct cw_Ramp *p) {
 	return (p->addr.io_type == iot_none) ? 0 : &p->addr;
 }
 MachineBase *cw_Ramp_To_MachineBase(struct cw_Ramp *p) { return &p->machine; }
+
 int cw_Ramp_check_state(struct cw_Ramp *m) {
 	int new_state = 0; enter_func new_state_enter = 0;
 	if (((m->VALUE >= m->end) && (m->direction > 0))) {
@@ -99,8 +86,8 @@ int cw_Ramp_check_state(struct cw_Ramp *m) {
 	{
 		new_state = state_cw_Ramp_stopped;
 	}
-	if (new_state != m->machine.state) {
-		changeMachineState(cw_Ramp_To_MachineBase(m), new_state, new_state_enter);
+	if (new_state && new_state != m->machine.state) {
+		changeMachineState(cw_Ramp_To_MachineBase(m), new_state, new_state_enter); // TODO: fix me
 		return 1;
 	}
 	return 0;
