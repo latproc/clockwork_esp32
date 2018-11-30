@@ -19,7 +19,9 @@
 #include "cw_ANALOGINPUT.h"
 
 #define DEBUG_LOG 0
-//static const char* TAG = "IOInterface";
+#if DEBUG_LOG
+static const char* TAG = "IOInterface";
+#endif
 
 static uint8_t *io_map = 0;
 static struct RTIOInterface *io_interface = 0;
@@ -119,7 +121,7 @@ void writeIO() {
                 if (item->data->io_type == iot_digout) {
                     gpio_set_level(item->gpio, cw_val);
 #if DEBUG_LOG
-                    ESP_LOGI(TAG,"writeIO gpio set level of %d:%d (pin %d) to %d", item->data->io_offset, item->data->io_bitpos, item->gpio, cw_val);
+                    //ESP_LOGI(TAG,"writeIO gpio set level of %d:%d (pin %d) to %d", item->data->io_offset, item->data->io_bitpos, item->gpio, cw_val);
 #endif
                     item->data->status = IO_DONE;
                     if (item->machine) markPending(item->machine);
@@ -133,7 +135,7 @@ void writeIO() {
                 ledc_set_duty(LEDC_HIGH_SPEED_MODE, cw_ANALOGOUTPUT_get_channel(a_out), cw_val);
                 ledc_update_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_0);
 #if DEBUG_LOG
-                ESP_LOGI(TAG,"writeIO gpio set level of %d:%d (pin %d) to %d", item->data->io_offset, item->data->io_bitpos, item->gpio, cw_val);
+                //ESP_LOGI(TAG,"writeIO gpio set level of %d:%d (pin %d) to %d", item->data->io_offset, item->data->io_bitpos, item->gpio, cw_val);
 #endif
                 item->data->status = IO_DONE;
                 if (item->machine) markPending(item->machine);
@@ -154,7 +156,11 @@ void readIO() {
                 rt_set_io_bit(item->data, val);
                 item->data->status = IO_DONE;
                 if (item->machine) markPending(item->machine);
-                // TBD raise event
+#if DEBUG_LOG
+                ESP_LOGI(TAG,"readIO gpio change to %d done", val);
+#endif
+                 // TBD raise event
+                markPending(item->machine);
             }
         }
         if (item->data->io_type == iot_adc) { // always read inputs
@@ -202,7 +208,7 @@ void createIOMap() {
             item->data->io_bitpos = (bits++ % 8);
             if (bits % 8 == 0) { ++bit_offset; bits = 0; }
 #if DEBUG_LOG
-            ESP_LOGI(TAG, "%lld added io bit at %d:%d",upTime(), item->data->io_offset, item->data->io_bitpos);
+            ESP_LOGI(TAG, "%lld added io bit at %d:%d for gpio: %d",upTime(), item->data->io_offset, item->data->io_bitpos, item->gpio);
 #endif
         }
         else if (item->data->bitlen == 8) {
@@ -252,6 +258,7 @@ void RTIOInterface(void *pvParameter) {
 	while (1) {
         writeIO();
         readIO();
+        vTaskDelay(1);
         taskYIELD();
     }
 }

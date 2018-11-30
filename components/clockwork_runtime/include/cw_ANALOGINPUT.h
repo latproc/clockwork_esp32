@@ -2,9 +2,9 @@
 #define __ANALOGINPUT_h__
 
 #include "runtime.h"
-#define state_cw_INIT 0
-#define state_cw_stable 1
-#define state_cw_unstable 2
+#define state_cw_INIT 1
+#define state_cw_unstable 4
+#define state_cw_stable 5
 struct cw_ANALOGINPUT;
 struct IOAddress *cw_ANALOGINPUT_getAddress(struct cw_ANALOGINPUT *p);
 int cw_ANALOGINPUT_getChannel(struct cw_ANALOGINPUT *p);

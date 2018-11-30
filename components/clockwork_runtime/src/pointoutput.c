@@ -31,9 +31,7 @@ int point_output_handle_message(struct MachineBase *obj, struct MachineBase *sou
 #if DEBUG_LOG
     ESP_LOGI(TAG,"%lld [%d] handling message [%d]", upTime(), obj->id, message);
 #endif
-   
-	if (message == cw_message_turnOn) {
-        
+	if (message == cw_message_turnOn) { 
 		turnOn( (struct PointOutput *)obj);
     }
     else if (message == cw_message_turnOff)

@@ -188,8 +188,6 @@ void changeMachineState(struct MachineBase *m, int new_state, enter_func handler
         m->TIMER = 0;
         m->START = upTime();
         m->execute = handler;
-        // TODO: publish event change
-        markPending(m);
     }
 }
 
@@ -210,9 +208,10 @@ void MachineActions_add(struct MachineBase *machine, enter_func f) {
 void NotifyDependents_state_change(struct MachineBase *machine, int state) {
     struct MachineListItem *item, *next;
     list_for_each_safe(&machine->depends, item, next, list) {
-        if (item->machine) if (item->machine->handle) item->machine->handle(item->machine, machine, state);
+        if (item->machine) { 
+          cw_send(item->machine, machine, state);
+        }
     }
-
 }
 
 void NotifyDependents(struct MachineBase *machine) {

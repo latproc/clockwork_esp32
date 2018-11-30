@@ -8,7 +8,9 @@
 #include "base_includes.h"
 
 #define DEBUG_LOG 0
-//static const char* TAG = "PointInput";
+#if DEBUG_LOG
+static const char* TAG = "PointInput";
+#endif
 
 struct PointInput {
 	MachineBase machine;

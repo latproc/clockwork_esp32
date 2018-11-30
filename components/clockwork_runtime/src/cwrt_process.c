@@ -5,8 +5,9 @@
 #include <esp_log.h>
 
 #define DEBUG_LOG 0
-
+#if DEBUG_LOG
 static const char* TAG = "process";
+#endif
 
 void cwrt_process(unsigned long *last) {
     MachineBase *m = 0;
@@ -21,12 +22,19 @@ void cwrt_process(unsigned long *last) {
 #if DEBUG_LOG
             ESP_LOGI(TAG,"%lld running machines", upTime());
 #endif
+            // update all machine's TIMER value (TODO: optimise this) for potential use in auto states
+            uint64_t up_time = upTime();
+            m = getMachineIterator();
+            while (m) {
+                m->TIMER = up_time - m->START;
+                m = nextMachine(m);
+            }
+            // process runnable machines
             while ( (m = nextRunnable()) != 0 ) {
                 if (m) {
 #if DEBUG_LOG
                     ESP_LOGI(TAG,"%lld running machine [%d]", upTime(), m->id);
 #endif
-                    m->TIMER = upTime() - m->START;
                     struct ActionListItem *next_action;
                     next_action = list_top(&m->actions, struct ActionListItem, list);
                     if (m->executing(m)) {

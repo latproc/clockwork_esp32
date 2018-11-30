@@ -2,9 +2,9 @@
 #define __ANALOGOUTPUT_h__
 
 #include "runtime.h"
-#define state_cw_INIT 0
-#define state_cw_stable 1
-#define state_cw_unstable 2
+#define state_cw_INIT 1
+#define state_cw_unstable 4
+#define state_cw_stable 5
 struct cw_ANALOGOUTPUT;
 struct cw_ANALOGOUTPUT *create_cw_ANALOGOUTPUT(const char *name, int pin, MachineBase *module, int offset, int channel);
 void Init_cw_ANALOGOUTPUT(struct cw_ANALOGOUTPUT * , const char *name, int pin, MachineBase *module, int offset, int channel);

@@ -11,8 +11,8 @@
 #include "runtime.h"
 #include "rtio.h"
 
-#define state_PointOutput_off 0
-#define state_PointOutput_on 1
+#define state_PointOutput_off 2
+#define state_PointOutput_on 3
 
 struct PointOutput;
 struct PointOutput *create_PointOutput(const char *name, int gpio);
