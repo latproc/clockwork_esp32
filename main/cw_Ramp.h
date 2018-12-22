@@ -3,11 +3,11 @@
 
 #include "runtime.h"
 #define state_cw_Ramp_INIT 1
-#define state_cw_Ramp_top 10
-#define state_cw_Ramp_bottom 6
-#define state_cw_Ramp_rising 8
-#define state_cw_Ramp_falling 7
-#define state_cw_Ramp_stopped 9
+#define state_cw_Ramp_top 11
+#define state_cw_Ramp_bottom 7
+#define state_cw_Ramp_rising 9
+#define state_cw_Ramp_falling 8
+#define state_cw_Ramp_stopped 10
 #define Value int
 struct cw_Ramp {
 	MachineBase machine;

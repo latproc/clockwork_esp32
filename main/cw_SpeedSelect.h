@@ -3,8 +3,8 @@
 
 #include "runtime.h"
 #define state_cw_SpeedSelect_INIT 1
-#define state_cw_SpeedSelect_fast 11
-#define state_cw_SpeedSelect_slow 12
+#define state_cw_SpeedSelect_fast 12
+#define state_cw_SpeedSelect_slow 13
 #define Value int
 struct cw_SpeedSelect {
 	MachineBase machine;

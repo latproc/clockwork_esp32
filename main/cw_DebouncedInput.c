@@ -7,15 +7,6 @@
 static const char* TAG = "DebouncedInput";
 #endif
 
-#define Value int
-struct cw_DebouncedInput {
-	MachineBase machine;
-	int gpio_pin;
-	struct IOAddress addr;
-	MachineBase *_in;
-	Value debounce_time; // 100
-	Value on_time; // 50
-};
 int cw_DebouncedInput_handle_message(struct MachineBase *ramp, struct MachineBase *machine, int state);
 int cw_DebouncedInput_check_state(struct cw_DebouncedInput *m);
 uint64_t cw_DebouncedInput_next_trigger_time(struct cw_DebouncedInput *m);
@@ -46,7 +37,7 @@ int cw_DebouncedInput_handle_message(struct MachineBase *obj, struct MachineBase
 uint64_t cw_DebouncedInput_next_trigger_time(struct cw_DebouncedInput *m) {
   uint64_t val = m->debounce_time;
   uint64_t res = val;
-	val = m->on_time;
+	val = m->off_time;
 	if (val < res && val > m->machine.TIMER ) res = val;
 	return res;
 }
@@ -56,7 +47,7 @@ void Init_cw_DebouncedInput(struct cw_DebouncedInput *m, const char *name, Machi
 	m->_in = in;
 	if (in) MachineDependencies_add(in, cw_DebouncedInput_To_MachineBase(m));
 	m->debounce_time = 100;
-	m->on_time = 50;
+	m->off_time = 50;
 	m->machine.state = state_cw_DebouncedInput_INIT;
 	m->machine.check_state = ( int(*)(MachineBase*) )cw_DebouncedInput_check_state;
 	m->machine.handle = (message_func)cw_DebouncedInput_handle_message; // handle message from other machines
@@ -72,7 +63,7 @@ int cw_DebouncedInput_check_state(struct cw_DebouncedInput *m) {
 	ESP_LOGI(TAG, "%lld check state; curr: %d, in: %d, timer: %ld", upTime(), m->machine.state, m->_in->state, m->_in->TIMER);
 #endif
 	int new_state = 0; enter_func new_state_enter = 0;
-	if ((((m->_in->state == state_cw_DebouncedInput_off) && (m->_in->TIMER >= m->debounce_time)) || ((m->machine.state == state_cw_DebouncedInput_off) && (m->machine.TIMER < m->on_time)))) {
+	if ((((m->_in->state == state_cw_DebouncedInput_off) && (m->_in->TIMER >= m->debounce_time)) || ((m->machine.state == state_cw_DebouncedInput_off) && (m->machine.TIMER < m->off_time)))) {
 		new_state = state_cw_DebouncedInput_off;
 		new_state_enter = (enter_func)cw_DebouncedInput_off_enter;
 	}
