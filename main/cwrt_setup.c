@@ -26,8 +26,8 @@ static const char* TAG = "setup";
 
 struct cw_Pulse *flasher0;
 struct cw_Pulse *flasher1;
-struct PointInput *in1;
-struct PointOutput *out1;
+//struct PointInput *in1;
+//struct PointOutput *out1;
 struct cw_ANALOGINPUT *ain1;
 struct cw_ANALOGOUTPUT *aout1;
 struct cw_Ramp *ramp0;
@@ -38,8 +38,8 @@ struct cw_DebouncedInput *d_in1;
 //#define point_out1 22 // lolin32
 //#define aout1_pin 33 // lolin32
 #define ain1_pin ADC1_CHANNEL_7 // GPIO35
-#define point_out1 GPIO_NUM_33 // esp32_gateway LEF
-#define point_in1 GPIO_NUM_34 // esp32_gateway BUT1
+//#define point_out1 GPIO_NUM_33 // esp32_gateway LEF
+//#define point_in1 GPIO_NUM_34 // esp32_gateway BUT1
 #define aout1_pin GPIO_NUM_16 // esp32_gateway
 #define V_REF 1100
 
@@ -51,11 +51,32 @@ void cwrt_setup() {
     adc1_config_width(ADC_WIDTH_BIT_12);
     esp_adc_cal_get_characteristics(V_REF, ADC_ATTEN_DB_0, ADC_WIDTH_BIT_12, &characteristics);
     adc1_config_channel_atten(ain1_pin, ADC_ATTEN_DB_0);
-    gpio_pad_select_gpio(point_in1);
-    gpio_set_direction(point_in1, GPIO_MODE_INPUT);
 
-    gpio_pad_select_gpio(point_out1);
-    gpio_set_direction(point_out1, GPIO_MODE_OUTPUT);
+    #define cw_OLIMEX_GATEWAY32_LED 33
+    #define cw_OLIMEX_GATEWAY32_BUT1 34
+    struct RTIOInterface *interface = RTIOInterface_get();
+    while (!interface) {
+    taskYIELD();
+    interface = RTIOInterface_get();
+    }
+    struct PointInput *cw_inst_button = create_cw_PointInput("button", cw_OLIMEX_GATEWAY32_BUT1);
+    gpio_pad_select_gpio(cw_OLIMEX_GATEWAY32_BUT1);
+    gpio_set_direction(cw_OLIMEX_GATEWAY32_BUT1, GPIO_MODE_INPUT);
+    {
+    struct MachineBase *m = cw_PointInput_To_MachineBase(cw_inst_button);
+    if (m->init) m->init();
+    struct IOItem *item_cw_inst_button = IOItem_create(m, cw_PointInput_getAddress(cw_inst_button), cw_OLIMEX_GATEWAY32_BUT1);
+    RTIOInterface_add(interface, item_cw_inst_button);
+    }
+    struct PointOutput *cw_inst_led = create_cw_PointOutput("led", cw_OLIMEX_GATEWAY32_LED);
+    gpio_pad_select_gpio(cw_OLIMEX_GATEWAY32_LED);
+    gpio_set_direction(cw_OLIMEX_GATEWAY32_LED, GPIO_MODE_OUTPUT);
+    {
+    struct MachineBase *m = cw_PointOutput_To_MachineBase(cw_inst_led);
+    if (m->init) m->init();
+    struct IOItem *item_cw_inst_led = IOItem_create(m, cw_PointOutput_getAddress(cw_inst_led), cw_OLIMEX_GATEWAY32_LED);
+    RTIOInterface_add(interface, item_cw_inst_led);
+    }
 
     // initialise the LEDC driver for analogue output 
     ledc_timer_config_t timer_conf;
@@ -76,20 +97,6 @@ void cwrt_setup() {
     channel_conf.intr_type = LEDC_INTR_DISABLE;
     ledc_channel_config(&channel_conf);
 
-    out1 = create_PointOutput("O1", point_out1);
-    assert(out1);
-    m = PointOutput_To_MachineBase(out1);
-    assert(m);
-    if (m->init) m->init();
-    struct IOItem *item_out = IOItem_create(m, PointOutput_getAddress(out1), point_out1);
-
-    in1 = create_PointInput("I1", point_in1);
-    assert(in1);
-    m = PointInput_To_MachineBase(in1);
-    assert(m);
-    if (m->init) m->init();
-    struct IOItem *item_in = IOItem_create(m, PointInput_getAddress(in1), point_in1);
-
     ain1 = create_cw_ANALOGINPUT("AIN1", ain1_pin, 0, 0, ADC_CHANNEL_0, 0);
     assert(ain1);
     m = cw_ANALOGINPUT_To_MachineBase(ain1);
@@ -106,7 +113,7 @@ void cwrt_setup() {
     struct IOItem *item_aout1 = IOItem_create(m, cw_ANALOGOUTPUT_getAddress(aout1), aout1_pin);
 
     // create clockwork machines
-    flasher0 = create_cw_Pulse("F0", out1);
+    flasher0 = create_cw_Pulse("F0", cw_inst_led);
     assert(flasher0);
     m = cw_Pulse_To_MachineBase(flasher0);
     assert(m);
@@ -120,7 +127,7 @@ void cwrt_setup() {
     if (m->init) m->init();
     ESP_LOGI(TAG,"%lld created machine [%d] %s", upTime(), m->id, m->name);
 
-    d_in1 = create_cw_DebouncedInput("D1", in1);
+    d_in1 = create_cw_DebouncedInput("D1", cw_inst_button);
     assert(d_in1);
     m = cw_DebouncedInput_To_MachineBase(d_in1);
     assert(m);
@@ -134,19 +141,9 @@ void cwrt_setup() {
     if (m->init) m->init();
     ESP_LOGI(TAG,"%lld created machine [%d] %s", upTime(), m->id, m->name);
 
-    struct RTIOInterface *interface = RTIOInterface_get();
-    while (!interface) {
-        taskYIELD();
-        interface = RTIOInterface_get();
-    }
-    ESP_LOGI(TAG,"%lld adding io item", upTime());
-    RTIOInterface_add(interface, item_in);
-    RTIOInterface_add(interface, item_out);
     RTIOInterface_add(interface, item_aout1);
     createIOMap();
     RTIOInterface_release();
-
-    ESP_LOGI(TAG,"%lld created machine [%d] %s", upTime(), m->id, m->name);
 
     debug("setup done");
 }

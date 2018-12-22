@@ -19,7 +19,7 @@ struct PointOutput {
     struct IOAddress addr;
 };
 
-struct PointOutput *create_PointOutput(const char *name, int gpio) {
+struct PointOutput *create_cw_PointOutput(const char *name, int gpio) {
     struct PointOutput *p = (struct PointOutput *)malloc(sizeof(struct PointOutput));
 	Init_PointOutput(p, name, gpio);
 	return p;
@@ -46,9 +46,9 @@ int PointOutput_check_state(struct PointOutput *m) {
         ESP_LOGI(TAG,"io value is now %d (%d)", m->addr.value.u8, val);
 #endif
         if (val)
-            changeMachineState(PointOutput_To_MachineBase(m), state_PointOutput_on, (enter_func) point_output_enter_on);
+            changeMachineState(cw_PointOutput_To_MachineBase(m), state_PointOutput_on, (enter_func) point_output_enter_on);
         else
-            changeMachineState(PointOutput_To_MachineBase(m), state_PointOutput_off, (enter_func) point_output_enter_off);
+            changeMachineState(cw_PointOutput_To_MachineBase(m), state_PointOutput_off, (enter_func) point_output_enter_off);
         return 1;
     }
     return 0;
@@ -65,11 +65,11 @@ void Init_PointOutput(struct PointOutput *m, const char *name, int gpio) {
     assert(xSemaphoreGiveRecursive(runtime_mutex) == pdFAIL);
 }
 
-struct IOAddress *PointOutput_getAddress(struct PointOutput *pi) {
+struct IOAddress *cw_PointOutput_getAddress(struct PointOutput *pi) {
     return &pi->addr; 
 }
 
-MachineBase *PointOutput_To_MachineBase(struct PointOutput *p) { return &p->machine; }
+MachineBase *cw_PointOutput_To_MachineBase(struct PointOutput *p) { return &p->machine; }
 
 int point_output_enter_on(struct PointOutput *m, ccrContParam) {
 #if DEBUG_LOG

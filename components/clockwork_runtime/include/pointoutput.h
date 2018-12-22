@@ -15,10 +15,10 @@
 #define state_PointOutput_on 3
 
 struct PointOutput;
-struct PointOutput *create_PointOutput(const char *name, int gpio);
+struct PointOutput *create_cw_PointOutput(const char *name, int gpio);
 void Init_PointOutput(struct PointOutput *, const char *name, int gpio);
-MachineBase *PointOutput_To_MachineBase(struct PointOutput *);
-struct IOAddress *PointOutput_getAddress(struct PointOutput *);
+MachineBase *cw_PointOutput_To_MachineBase(struct PointOutput *);
+struct IOAddress *cw_PointOutput_getAddress(struct PointOutput *);
 void turnOn(struct PointOutput *output);
 void turnOff(struct PointOutput *output);
 

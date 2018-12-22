@@ -2,6 +2,7 @@
 #include "base_includes.h"
 #include "cw_message_ids.h"
 #include "cw_Ramp.h"
+#include "cw_ANALOGOUTPUT.h"
 static const char* TAG = "Ramp";
 #define DEBUG_LOG 0
 int cw_Ramp_handle_message(struct MachineBase *ramp, struct MachineBase *machine, int state);
@@ -86,6 +87,7 @@ int cw_Ramp_check_state(struct cw_Ramp *m) {
 	{
 		new_state = state_cw_Ramp_stopped;
 	}
+	cw_ANALOGOUTPUT_set_value(m->_output, m->VALUE & 0xffff);
 	if (new_state && new_state != m->machine.state) {
 		changeMachineState(cw_Ramp_To_MachineBase(m), new_state, new_state_enter); // TODO: fix me
 		return 1;

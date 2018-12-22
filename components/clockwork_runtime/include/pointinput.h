@@ -15,9 +15,9 @@
 #define state_PointInput_on 3
 
 struct PointInput;
-struct PointInput *create_PointInput(const char *name, int gpio);
+struct PointInput *create_cw_PointInput(const char *name, int gpio);
 void Init_PointInput(struct PointInput *, const char *name, int gpio);
-MachineBase *PointInput_To_MachineBase(struct PointInput *);
-struct IOAddress *PointInput_getAddress(struct PointInput *);
+MachineBase *cw_PointInput_To_MachineBase(struct PointInput *);
+struct IOAddress *cw_PointInput_getAddress(struct PointInput *);
 
 #endif
