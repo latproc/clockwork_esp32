@@ -35,10 +35,12 @@ int cw_DebouncedInput_handle_message(struct MachineBase *obj, struct MachineBase
 	return 1;
 }
 uint64_t cw_DebouncedInput_next_trigger_time(struct cw_DebouncedInput *m) {
-  uint64_t val = m->debounce_time;
-  uint64_t res = val;
-	val = m->off_time;
-	if (val < res && val > m->machine.TIMER ) res = val;
+    int64_t res = 1000000000;
+    int64_t val = m->debounce_time - m->machine.TIMER;
+	if (val > 0 && val < res) res = val;
+	val = m->off_time - m->_in->TIMER;
+	if (val > 0 && val < res) res = val;
+	if (res == 1000000000) res = 0;
 	return res;
 }
 void Init_cw_DebouncedInput(struct cw_DebouncedInput *m, const char *name, MachineBase *in) {
@@ -59,9 +61,7 @@ struct IOAddress *cw_DebouncedInput_getAddress(struct cw_DebouncedInput *p) {
 }
 MachineBase *cw_DebouncedInput_To_MachineBase(struct cw_DebouncedInput *p) { return &p->machine; }
 int cw_DebouncedInput_check_state(struct cw_DebouncedInput *m) {
-#if DEBUG_LOG
-	ESP_LOGI(TAG, "%lld check state; curr: %d, in: %d, timer: %ld", upTime(), m->machine.state, m->_in->state, m->_in->TIMER);
-#endif
+	int res = 0;
 	int new_state = 0; enter_func new_state_enter = 0;
 	if ((((m->_in->state == state_cw_DebouncedInput_off) && (m->_in->TIMER >= m->debounce_time)) || ((m->machine.state == state_cw_DebouncedInput_off) && (m->machine.TIMER < m->off_time)))) {
 		new_state = state_cw_DebouncedInput_off;
@@ -72,31 +72,21 @@ int cw_DebouncedInput_check_state(struct cw_DebouncedInput *m) {
 		new_state = state_cw_DebouncedInput_on;
 		new_state_enter = (enter_func)cw_DebouncedInput_on_enter;
 	}
-	int res = 0;
+	if (new_state && new_state != m->machine.state) {
+		changeMachineState(cw_DebouncedInput_To_MachineBase(m), new_state, new_state_enter); // TODO: fix me
+		markPending(&m->machine);
+		res = 1;
+	}
 	uint64_t delay = cw_DebouncedInput_next_trigger_time(m);
-	if (delay > m->_in->TIMER) {
+	if (delay > 0) {
 		struct RTScheduler *scheduler = RTScheduler_get();
 		while (!scheduler) {
 			taskYIELD();
 			scheduler = RTScheduler_get();
 		}
-		RTScheduler_add(scheduler, ScheduleItem_create(delay - m->_in->TIMER, &m->machine));
-#if DEBUG_LOG
-		ESP_LOGI(TAG, "%lld scheduled wake; in: %d, timer: %lld", upTime(), m->_in->state, delay - m->_in->TIMER);
-#endif
+		RTScheduler_add(scheduler, ScheduleItem_create(delay, &m->machine));
 		RTScheduler_release();
 	}
-	else {
-#if DEBUG_LOG
-		ESP_LOGI(TAG, "%lld no wakeup; in: %d, timer: %ld, %lld", upTime(), m->_in->state, m->_in->TIMER, delay);
-#endif
-	}
-	if (new_state && new_state != m->machine.state) {
-		res = 1;
-#if DEBUG_LOG
-		ESP_LOGI(TAG,"%lld %s switching from %d to %d", upTime(), m->machine.name, m->machine.state, new_state);
-#endif
-		changeMachineState(cw_DebouncedInput_To_MachineBase(m), new_state, new_state_enter); // TODO: fix me
-	}
+	else markPending(&m->machine);
 	return res;
 }
