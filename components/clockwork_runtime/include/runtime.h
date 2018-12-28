@@ -33,6 +33,7 @@ struct MachineBase;
 typedef int (*enter_func)(struct MachineBase *, ccrContParam);
 typedef int (*message_func)(struct MachineBase *, struct MachineBase *, int state);
 typedef int* (*lookup_func)(struct MachineBase *, int symbol);
+typedef struct MachineBase* (*lookup_machine_func)(struct MachineBase *, int symbol);
 
 typedef struct MachineBase {
 	struct MachineBase *p_next;
@@ -50,6 +51,7 @@ typedef struct MachineBase {
 	enter_func execute; // the currently executing action
 	message_func handle; // handle messages
 	lookup_func lookup; // lookup symbols
+	lookup_machine_func lookup_machine; // lookup symbols
 	int (*check_state)(struct MachineBase *);
 } MachineBase;
 

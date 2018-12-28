@@ -155,12 +155,13 @@ void readIO() {
             if (val != cw_val) {
                 rt_set_io_bit(item->data, val);
                 item->data->status = IO_DONE;
-                if (item->machine) markPending(item->machine);
+                if (item->machine) {
+                    markPending(item->machine);
 #if DEBUG_LOG
-                ESP_LOGI(TAG,"readIO gpio change to %d done", val);
+                    ESP_LOGI(TAG,"readIO gpio change to %d done", val);
 #endif
-                 // TBD raise event
-                markPending(item->machine);
+                    NotifyDependents(item->machine);
+                }
             }
         }
         if (item->data->io_type == iot_adc) { // always read inputs
@@ -170,8 +171,10 @@ void readIO() {
             if (val != cw_val) {
                 rt_set_io_uint16(item->data, val);
                 item->data->status = IO_DONE;
-                if (item->machine) markPending(item->machine);
-                // TBD raise event
+                if (item->machine) {
+                    markPending(item->machine);
+                    NotifyDependents(item->machine);
+                }
             }
         }
         else if (item->data->io_type == iot_digout) { // read outputs but only update clockwork if output matches current state
@@ -182,8 +185,10 @@ void readIO() {
                 ESP_LOGI(TAG,"readIO gpio change to %d done", cw_val);
 #endif
                 item->data->status = IO_DONE;
-                if (item->machine) markPending(item->machine);
-                // TBD raise event
+                if (item->machine) {
+                    markPending(item->machine);
+                    NotifyDependents(item->machine);
+                }
             }
         }
     }

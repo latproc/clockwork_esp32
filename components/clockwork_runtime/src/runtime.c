@@ -217,7 +217,9 @@ void NotifyDependents_state_change(struct MachineBase *machine, int state) {
 void NotifyDependents(struct MachineBase *machine) {
     struct MachineListItem *item, *next;
     list_for_each_safe(&machine->depends, item, next, list) {
-        if (item->machine) markPending(item->machine);
+        if (item->machine) {
+            markPending(item->machine);
+        }
     }
 }
 

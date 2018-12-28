@@ -33,22 +33,28 @@ void cwrt_process(unsigned long *last) {
             while ( (m = nextRunnable()) != 0 ) {
                 if (m) {
 #if DEBUG_LOG
-                    ESP_LOGI(TAG,"%lld running machine [%d]", upTime(), m->id);
+                    ESP_LOGI(TAG,"%lld running machine [%d] %s", upTime(), m->id, m->name);
 #endif
                     struct ActionListItem *next_action;
                     next_action = list_top(&m->actions, struct ActionListItem, list);
                     if (m->executing(m)) {
                         m->execute(m, &(m->ctx) );
+                        if (!m->executing(m)) {
+                            NotifyDependents(m); // finished execution
+                        }
                         markPending(m);
                     }
                     else if (next_action) {
-#if DEBUG_LOG
-                        ESP_LOGI(TAG,"starting new action on %s", m->name);
-#endif
                         next_action = list_pop(&m->actions, struct ActionListItem, list);
                         m->execute = next_action->action;
                         free(next_action);
                         m->execute(m, &(m->ctx) );
+                        if (!m->executing(m)) {
+#if DEBUG_LOG
+                            ESP_LOGI(TAG,"notifying dependents of %s", m->name);
+#endif
+                            NotifyDependents(m); // finished execution
+                        }
                         markPending(m);
                     }
                     else if (list_top(&m->messages, struct MessageListItem, list)) {
@@ -66,6 +72,10 @@ void cwrt_process(unsigned long *last) {
                         }
                     }
                     else if (m->check_state && m->check_state(m)) { // state change
+#if DEBUG_LOG
+                        ESP_LOGI(TAG,"%lld changing state of %s", upTime(), m->name);
+#endif
+
                         struct MachineListItem *item, *next;
                         list_for_each_safe(&m->depends, item, next, list) {
                             if (item->machine->handle) 
@@ -74,7 +84,7 @@ void cwrt_process(unsigned long *last) {
                     }
 #if DEBUG_LOG
                     else
-                        ESP_LOGI(TAG,"%lld running machine [%d]", upTime(), m->id);
+                        ESP_LOGI(TAG,"%lld nothing to do for %s", upTime(), m->name);
 #endif
                 }
             }
