@@ -2,10 +2,8 @@
 #define __cw_DebouncedInput_h__
 
 #include "runtime.h"
-#define state_cw_DebouncedInput_INIT 1
-#define state_cw_DebouncedInput_off 2
-#define state_cw_DebouncedInput_on 3
 #define Value int
+struct cw_DebouncedInput_Vars;
 struct cw_DebouncedInput {
 	MachineBase machine;
 	int gpio_pin;
@@ -13,6 +11,7 @@ struct cw_DebouncedInput {
 	MachineBase *_in;
 	Value debounce_time; // 100
 	Value off_time; // 50
+	struct cw_DebouncedInput_Vars *vars;
 };
 struct IOAddress *cw_DebouncedInput_getAddress(struct cw_DebouncedInput *p);
 struct cw_DebouncedInput *create_cw_DebouncedInput(const char *name, MachineBase *in);
