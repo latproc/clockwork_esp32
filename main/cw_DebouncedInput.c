@@ -3,15 +3,12 @@
 #include "cw_message_ids.h"
 #include "cw_symbol_ids.h"
 #include "cw_DebouncedInput.h"
-#define DEBUG_LOG 1
-#if DEBUG_LOG
+#define DEBUG_LOG 0
 static const char* TAG = "DebouncedInput";
-#endif
 
 #define state_cw_INIT 1
 #define state_cw_off 2
 #define state_cw_on 3
-
 struct cw_DebouncedInput_Vars {
 	struct cw_DebouncedInput *m;
 	unsigned int l_INIT;
@@ -49,9 +46,6 @@ MachineBase *cw_DebouncedInput_lookup_machine(struct cw_DebouncedInput *m, int s
 	if (symbol == sym_in) return m->_in;
 	return 0;
 }
-void cw_DebouncedInput_INIT_enter(struct cw_DebouncedInput *m) {
-	m->machine.execute = 0;
-}
 int cw_DebouncedInput_handle_message(struct MachineBase *ramp, struct MachineBase *machine, int state);
 int cw_DebouncedInput_check_state(struct cw_DebouncedInput *m);
 uint64_t cw_DebouncedInput_next_trigger_time(struct cw_DebouncedInput *m, struct cw_DebouncedInput_Vars *v);
@@ -60,16 +54,24 @@ struct cw_DebouncedInput *create_cw_DebouncedInput(const char *name, MachineBase
 	Init_cw_DebouncedInput(p, name, in);
 	return p;
 }
-int cw_DebouncedInput_off_enter(struct cw_DebouncedInput *m, ccrContParam) {// off 
+int cw_DebouncedInput_off_enter(struct cw_DebouncedInput *m, ccrContParam) {
+	struct cw_DebouncedInput_Vars *v = m->vars;
+// off 
 	ESP_LOGI(TAG, "%lld %s", upTime(), "Debounce input off");
 	m->machine.execute = 0;
 	return 1;
 }
-int cw_DebouncedInput_on_enter(struct cw_DebouncedInput *m, ccrContParam) {// on 
+int cw_DebouncedInput_on_enter(struct cw_DebouncedInput *m, ccrContParam) {
+	struct cw_DebouncedInput_Vars *v = m->vars;
+// on 
 	ESP_LOGI(TAG, "%lld %s", upTime(), "Debounced input on");
 	m->machine.execute = 0;
 	return 1;
 }
+int cw_DebouncedInput_INIT_enter(struct cw_DebouncedInput *m, ccrContParam) {
+	m->machine.execute = 0;
+	return 1;
+};
 int cw_DebouncedInput_handle_message(struct MachineBase *obj, struct MachineBase *source, int state) {
 	struct cw_DebouncedInput *m = (struct cw_DebouncedInput *)obj;
 	markPending(obj);
@@ -112,7 +114,7 @@ int cw_DebouncedInput_check_state(struct cw_DebouncedInput *m) {
 	struct cw_DebouncedInput_Vars *v = m->vars;
 	int res = 0;
 	int new_state = 0; enter_func new_state_enter = 0;
-	if ((((*v->l_in == v->l_off) && (*v->l_in_TIMER >= *v->l_debounce_time)) || ((v->l_SELF == v->l_off) && (m->machine.TIMER < *v->l_off_time)))) {
+	if ((((*v->l_in == v->l_off) && (*v->l_in_TIMER >= *v->l_debounce_time)) || ((*v->l_SELF == v->l_off) && (m->machine.TIMER < *v->l_off_time)))) {
 		new_state = state_cw_off;
 		new_state_enter = (enter_func)cw_DebouncedInput_off_enter;
 	}

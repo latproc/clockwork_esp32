@@ -2,16 +2,15 @@
 #define __cw_SpeedSelect_h__
 
 #include "runtime.h"
-#define state_cw_SpeedSelect_INIT 1
-#define state_cw_SpeedSelect_fast 12
-#define state_cw_SpeedSelect_slow 13
 #define Value int
+struct cw_SpeedSelect_Vars;
 struct cw_SpeedSelect {
 	MachineBase machine;
 	int gpio_pin;
 	struct IOAddress addr;
 	MachineBase *_button;
 	MachineBase *_pulser;
+	struct cw_SpeedSelect_Vars *vars;
 };
 struct IOAddress *cw_SpeedSelect_getAddress(struct cw_SpeedSelect *p);
 struct cw_SpeedSelect *create_cw_SpeedSelect(const char *name, MachineBase *button, MachineBase *pulser);

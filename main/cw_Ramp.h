@@ -2,13 +2,8 @@
 #define __cw_Ramp_h__
 
 #include "runtime.h"
-#define state_cw_Ramp_INIT 1
-#define state_cw_Ramp_top 11
-#define state_cw_Ramp_bottom 7
-#define state_cw_Ramp_rising 9
-#define state_cw_Ramp_falling 8
-#define state_cw_Ramp_stopped 10
 #define Value int
+struct cw_Ramp_Vars;
 struct cw_Ramp {
 	MachineBase machine;
 	int gpio_pin;
@@ -20,6 +15,7 @@ struct cw_Ramp {
 	Value end; // 30000
 	Value start; // 1000
 	Value step; // 800
+	struct cw_Ramp_Vars *vars;
 };
 struct IOAddress *cw_Ramp_getAddress(struct cw_Ramp *p);
 struct cw_Ramp *create_cw_Ramp(const char *name, MachineBase *clock, MachineBase *output);
