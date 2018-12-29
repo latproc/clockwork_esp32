@@ -25,7 +25,7 @@ static void init_Vars(struct cw_SpeedSelect *m, struct cw_SpeedSelect_Vars *v) {
 	v->l_fast = state_cw_fast;
 	v->l_pulser = &m->_pulser->state;
 	{
-	MachineBase *mm = m;
+	MachineBase *mm = &m->machine;
 	mm = mm->lookup_machine(mm, sym_pulser);
 	v->l_pulser_delay = mm->lookup(mm, sym_delay);
 	}
@@ -49,7 +49,7 @@ struct cw_SpeedSelect *create_cw_SpeedSelect(const char *name, MachineBase *butt
 int cw_SpeedSelect_button_off_enter(struct cw_SpeedSelect *m, ccrContParam) {
 	struct cw_SpeedSelect_Vars *v = m->vars;
 // button.off_enter 
-	cw_send(m->_pulser, m, cw_message_toggle_speed);
+	cw_send(m->_pulser, &m->machine, cw_message_toggle_speed);
 	m->machine.execute = 0;
 	return 1;
 }
@@ -60,7 +60,7 @@ int cw_SpeedSelect_INIT_enter(struct cw_SpeedSelect *m, ccrContParam) {
 int cw_SpeedSelect_handle_message(struct MachineBase *obj, struct MachineBase *source, int state) {
 	struct cw_SpeedSelect *m = (struct cw_SpeedSelect *)obj;
 	 if (source == m->_button && state == 2)
-		MachineActions_add(m, (enter_func)cw_SpeedSelect_button_off_enter);
+		MachineActions_add(obj, (enter_func)cw_SpeedSelect_button_off_enter);
 	markPending(obj);
 	return 1;
 }

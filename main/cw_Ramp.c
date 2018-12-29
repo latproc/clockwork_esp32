@@ -49,7 +49,7 @@ static void init_Vars(struct cw_Ramp *m, struct cw_Ramp_Vars *v) {
 	v->l_on = state_cw_on;
 	v->l_output = &m->_output->state;
 	{
-	MachineBase *mm = m;
+	MachineBase *mm = &m->machine;
 	mm = mm->lookup_machine(mm, sym_output);
 	v->l_output_VALUE = mm->lookup(mm, sym_VALUE);
 	}
@@ -84,7 +84,7 @@ int cw_Ramp_INIT_enter(struct cw_Ramp *m, ccrContParam) {
 // INIT 
 	*v->l_output_VALUE = *v->l_start;
 	*v->l_direction = 1;
-	cw_send(m->_forward, m, cw_message_turnOn);
+	cw_send(m->_forward, &m->machine, cw_message_turnOn);
 	m->machine.execute = 0;
 	return 1;
 }
@@ -93,7 +93,7 @@ int cw_Ramp_bottom_forward_enter(struct cw_Ramp *m, ccrContParam) {
 // bottom_forward 
 	*v->l_output_VALUE = *v->l_start;
 	*v->l_direction = 1;
-	cw_send(m->_forward, m, cw_message_turnOff);
+	cw_send(m->_forward, &m->machine, cw_message_turnOff);
 	m->machine.execute = 0;
 	return 1;
 }
@@ -102,7 +102,7 @@ int cw_Ramp_bottom_reverse_enter(struct cw_Ramp *m, ccrContParam) {
 // bottom_reverse 
 	*v->l_output_VALUE = *v->l_start;
 	*v->l_direction = 1;
-	cw_send(m->_forward, m, cw_message_turnOn);
+	cw_send(m->_forward, &m->machine, cw_message_turnOn);
 	m->machine.execute = 0;
 	return 1;
 }
@@ -124,7 +124,7 @@ int cw_Ramp_top_enter(struct cw_Ramp *m, ccrContParam) {
 int cw_Ramp_handle_message(struct MachineBase *obj, struct MachineBase *source, int state) {
 	struct cw_Ramp *m = (struct cw_Ramp *)obj;
 	 if (source == m->_clock && state == 3)
-		MachineActions_add(m, (enter_func)cw_Ramp_clock_on_enter);
+		MachineActions_add(obj, (enter_func)cw_Ramp_clock_on_enter);
 	markPending(obj);
 	return 1;
 }

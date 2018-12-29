@@ -49,7 +49,7 @@ int cw_Pulse_off_enter(struct cw_Pulse *m, ccrContParam) {
 	struct cw_Pulse_Vars *v = m->vars;
 // off 
 	ESP_LOGI(TAG, "%lld %s", upTime(), " off");
-	cw_send(m->_out, m, cw_message_turnOff);
+	cw_send(m->_out, &m->machine, cw_message_turnOff);
 	m->machine.execute = 0;
 	return 1;
 }
@@ -57,7 +57,7 @@ int cw_Pulse_on_enter(struct cw_Pulse *m, ccrContParam) {
 	struct cw_Pulse_Vars *v = m->vars;
 // on 
 	ESP_LOGI(TAG, "%lld %s", upTime(), " on");
-	cw_send(m->_out, m, cw_message_turnOn);
+	cw_send(m->_out, &m->machine, cw_message_turnOn);
 	m->machine.execute = 0;
 	return 1;
 }
@@ -75,7 +75,7 @@ int cw_Pulse_INIT_enter(struct cw_Pulse *m, ccrContParam) {
 int cw_Pulse_handle_message(struct MachineBase *obj, struct MachineBase *source, int state) {
 	struct cw_Pulse *m = (struct cw_Pulse *)obj;
 	if (state == cw_message_toggle_speed)
-		MachineActions_add(m, (enter_func)cw_Pulse_toggle_speed);
+		MachineActions_add(obj, (enter_func)cw_Pulse_toggle_speed);
 	markPending(obj);
 	return 1;
 }

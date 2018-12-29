@@ -28,7 +28,7 @@ gpio_set_direction(cw_OLIMEX_GATEWAY32_LED, GPIO_MODE_OUTPUT);
 	struct IOItem *item_cw_inst_led = IOItem_create(m, cw_PointOutput_getAddress(cw_inst_led), cw_OLIMEX_GATEWAY32_LED);
 	RTIOInterface_add(interface, item_cw_inst_led);
 }
-struct ANALOGOUTPUT *cw_inst_aout = create_cw_ANALOGOUTPUT("aout", cw_OLIMEX_GATEWAY32_GPIO16, 0, 0, LEDC_CHANNEL_0);
+struct cw_ANALOGOUTPUT *cw_inst_aout = create_cw_ANALOGOUTPUT("aout", cw_OLIMEX_GATEWAY32_GPIO16, 0, 0, LEDC_CHANNEL_0);
 {
 	struct MachineBase *m = cw_ANALOGOUTPUT_To_MachineBase(cw_inst_aout);
 	if (m->init) m->init();
@@ -44,22 +44,22 @@ gpio_set_direction(cw_OLIMEX_GATEWAY32_GPIO17, GPIO_MODE_OUTPUT);
 	struct IOItem *item_cw_inst_direction = IOItem_create(m, cw_PointOutput_getAddress(cw_inst_direction), cw_OLIMEX_GATEWAY32_GPIO17);
 	RTIOInterface_add(interface, item_cw_inst_direction);
 }
-struct Pulse *cw_inst_pulser = create_cw_Pulse("pulser", cw_inst_led);
+struct cw_Pulse *cw_inst_pulser = create_cw_Pulse("pulser", (MachineBase*)cw_inst_led);
 {
 	struct MachineBase *m = cw_Pulse_To_MachineBase(cw_inst_pulser);
 	if (m->init) m->init();
 }
-struct Ramp *cw_inst_ramp = create_cw_Ramp("ramp", cw_inst_pulser, cw_inst_aout, cw_inst_direction);
+struct cw_Ramp *cw_inst_ramp = create_cw_Ramp("ramp", (MachineBase*)cw_inst_pulser, (MachineBase*)cw_inst_aout, (MachineBase*)cw_inst_direction);
 {
 	struct MachineBase *m = cw_Ramp_To_MachineBase(cw_inst_ramp);
 	if (m->init) m->init();
 }
-struct DebouncedInput *cw_inst_d_button = create_cw_DebouncedInput("d_button", cw_inst_button);
+struct cw_DebouncedInput *cw_inst_d_button = create_cw_DebouncedInput("d_button", (MachineBase*)cw_inst_button);
 {
 	struct MachineBase *m = cw_DebouncedInput_To_MachineBase(cw_inst_d_button);
 	if (m->init) m->init();
 }
-struct SpeedSelect *cw_inst_speed_select = create_cw_SpeedSelect("speed_select", cw_inst_d_button, cw_inst_pulser);
+struct cw_SpeedSelect *cw_inst_speed_select = create_cw_SpeedSelect("speed_select", (MachineBase*)cw_inst_d_button, (MachineBase*)cw_inst_pulser);
 {
 	struct MachineBase *m = cw_SpeedSelect_To_MachineBase(cw_inst_speed_select);
 	if (m->init) m->init();

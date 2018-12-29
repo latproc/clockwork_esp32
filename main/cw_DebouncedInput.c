@@ -29,7 +29,7 @@ static void init_Vars(struct cw_DebouncedInput *m, struct cw_DebouncedInput_Vars
 	v->l_debounce_time = &m->debounce_time;
 	v->l_in = &m->_in->state;
 	{
-	MachineBase *mm = m;
+	MachineBase *mm = &m->machine;
 	mm = mm->lookup_machine(mm, sym_in);
 	v->l_in_TIMER = &mm->TIMER;
 	}
