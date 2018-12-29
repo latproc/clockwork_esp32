@@ -59,6 +59,7 @@ typedef struct cwTask {
 } cwTask;
 
 cwTask *run_list = 0;
+cwTask *state_check_list = 0;
 cwTask *current_task = 0;
 cwTask *to_clear = 0;
 cwTask *pending_tasks = 0;
@@ -149,6 +150,44 @@ MachineBase *nextRunnable() {
 }
 
 int runnableMachines() { return run_list != 0; }
+
+int stateCheckMachines() { return state_check_list != 0; }
+
+cwTask *popStateCheck() {
+    current_task = state_check_list;
+    if (state_check_list) state_check_list = state_check_list->next;
+    return current_task;
+}
+
+void markStateCheck(MachineBase *m) {
+    assert(runtime_mutex);
+    BaseType_t res = xSemaphoreTakeRecursive(runtime_mutex,10);
+    assert(res == pdPASS);
+    cwTask *t = (cwTask *)malloc(sizeof(cwTask));;
+    t->machine = m; t->f = 0;
+	t->next = state_check_list;
+	state_check_list = t;
+    res = xSemaphoreGiveRecursive(runtime_mutex);
+    assert(res == pdPASS);
+}
+
+MachineBase *nextStateCheck() {
+    assert(runtime_mutex);
+    BaseType_t res = xSemaphoreTakeRecursive(runtime_mutex,10);
+    assert(res == pdPASS);
+	cwTask *t = popStateCheck();
+	to_clear = clearTaskList(to_clear);
+	if (t) {
+		MachineBase *m = t->machine;
+		t->next = to_clear; to_clear = t;
+        res = xSemaphoreGiveRecursive(runtime_mutex);
+        assert(res == pdPASS);
+		return m;
+	}
+    res = xSemaphoreGiveRecursive(runtime_mutex);
+    assert(res == pdPASS);
+	return 0;
+}
 
 int noExecutionStage(MachineBase *m) { return 0; }
 int stateExecutionStage(MachineBase *m) { return m->execute != 0; }

@@ -71,7 +71,14 @@ void cwrt_process(unsigned long *last) {
                             item = list_pop(&m->messages, struct MessageListItem, list);
                         }
                     }
-                    else if (m->check_state && m->check_state(m)) { // state change
+                    else if (m->check_state) {
+                        markStateCheck(m);
+                    }
+                }
+            }
+            while ( (m = nextStateCheck()) != 0 ) {
+                if (m) {
+                    if (m->check_state && m->check_state(m)) { // state change
 #if DEBUG_LOG
                         ESP_LOGI(TAG,"%lld changing state of %s", upTime(), m->name);
 #endif

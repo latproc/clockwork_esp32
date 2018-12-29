@@ -83,6 +83,11 @@ MachineBase *nextRunnable();
 void markPending(MachineBase *m);
 void activatePending();
 
+int stateCheckMachines(); // are there machines that need state rules evaluated?
+void markStateCheck(MachineBase *m);
+MachineBase *nextStateCheck();
+
+
 void changeMachineState(struct MachineBase *, int new_state, enter_func handler);
 
 void MachineDependencies_add(struct MachineBase *machine, struct MachineBase *item);
