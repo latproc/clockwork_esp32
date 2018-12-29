@@ -7,8 +7,8 @@
 static const char* TAG = "Pulse";
 
 #define state_cw_INIT 1
-#define state_cw_on 3
 #define state_cw_off 2
+#define state_cw_on 3
 struct cw_Pulse_Vars {
 	struct cw_Pulse *m;
 	unsigned int l_INIT;
@@ -98,7 +98,7 @@ void Init_cw_Pulse(struct cw_Pulse *m, const char *name, MachineBase *out) {
 	m->machine.check_state = ( int(*)(MachineBase*) )cw_Pulse_check_state;
 	m->machine.handle = (message_func)cw_Pulse_handle_message; // handle message from other machines
 	m->machine.lookup = (lookup_func)cw_Pulse_lookup; // lookup symbols within this machine
-	m->machine.lookup_machine = (lookup_func)cw_Pulse_lookup_machine; // lookup symbols within this machine
+	m->machine.lookup_machine = (lookup_machine_func)cw_Pulse_lookup_machine; // lookup symbols within this machine
 	m->vars = (struct cw_Pulse_Vars *)malloc(sizeof(struct cw_Pulse_Vars));
 	init_Vars(m, m->vars);
 	MachineActions_add(cw_Pulse_To_MachineBase(m), (enter_func)cw_Pulse_INIT_enter);

@@ -65,7 +65,7 @@ void cwrt_setup() {
     channel_conf.speed_mode = LEDC_HIGH_SPEED_MODE;
     channel_conf.duty = 0;
     channel_conf.timer_sel = LEDC_TIMER_0;
-    channel_conf.hpoint = 9000;
+    channel_conf.hpoint = 1000;
     channel_conf.intr_type = LEDC_INTR_DISABLE;
     ledc_channel_config(&channel_conf);
 

@@ -10,7 +10,7 @@ struct cw_Ramp {
 	struct IOAddress addr;
 	MachineBase *_clock;
 	MachineBase *_output;
-	Value VALUE; // 0
+	MachineBase *_forward;
 	Value direction; // 0
 	Value end; // 30000
 	Value start; // 1000
@@ -18,7 +18,7 @@ struct cw_Ramp {
 	struct cw_Ramp_Vars *vars;
 };
 struct IOAddress *cw_Ramp_getAddress(struct cw_Ramp *p);
-struct cw_Ramp *create_cw_Ramp(const char *name, MachineBase *clock, MachineBase *output);
-void Init_cw_Ramp(struct cw_Ramp * , const char *name, MachineBase *clock, MachineBase *output);
+struct cw_Ramp *create_cw_Ramp(const char *name, MachineBase *clock, MachineBase *output, MachineBase *forward);
+void Init_cw_Ramp(struct cw_Ramp * , const char *name, MachineBase *clock, MachineBase *output, MachineBase *forward);
 MachineBase *cw_Ramp_To_MachineBase(struct cw_Ramp *);
 #endif

@@ -99,7 +99,7 @@ void Init_cw_DebouncedInput(struct cw_DebouncedInput *m, const char *name, Machi
 	m->machine.check_state = ( int(*)(MachineBase*) )cw_DebouncedInput_check_state;
 	m->machine.handle = (message_func)cw_DebouncedInput_handle_message; // handle message from other machines
 	m->machine.lookup = (lookup_func)cw_DebouncedInput_lookup; // lookup symbols within this machine
-	m->machine.lookup_machine = (lookup_func)cw_DebouncedInput_lookup_machine; // lookup symbols within this machine
+	m->machine.lookup_machine = (lookup_machine_func)cw_DebouncedInput_lookup_machine; // lookup symbols within this machine
 	m->vars = (struct cw_DebouncedInput_Vars *)malloc(sizeof(struct cw_DebouncedInput_Vars));
 	init_Vars(m, m->vars);
 	MachineActions_add(cw_DebouncedInput_To_MachineBase(m), (enter_func)cw_DebouncedInput_INIT_enter);

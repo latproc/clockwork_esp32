@@ -7,8 +7,8 @@
 static const char* TAG = "SpeedSelect";
 
 #define state_cw_INIT 1
-#define state_cw_fast 12
-#define state_cw_slow 13
+#define state_cw_fast 13
+#define state_cw_slow 14
 struct cw_SpeedSelect_Vars {
 	struct cw_SpeedSelect *m;
 	unsigned int l_INIT;
@@ -75,7 +75,7 @@ void Init_cw_SpeedSelect(struct cw_SpeedSelect *m, const char *name, MachineBase
 	m->machine.check_state = ( int(*)(MachineBase*) )cw_SpeedSelect_check_state;
 	m->machine.handle = (message_func)cw_SpeedSelect_handle_message; // handle message from other machines
 	m->machine.lookup = (lookup_func)cw_SpeedSelect_lookup; // lookup symbols within this machine
-	m->machine.lookup_machine = (lookup_func)cw_SpeedSelect_lookup_machine; // lookup symbols within this machine
+	m->machine.lookup_machine = (lookup_machine_func)cw_SpeedSelect_lookup_machine; // lookup symbols within this machine
 	m->vars = (struct cw_SpeedSelect_Vars *)malloc(sizeof(struct cw_SpeedSelect_Vars));
 	init_Vars(m, m->vars);
 	MachineActions_add(cw_SpeedSelect_To_MachineBase(m), (enter_func)cw_SpeedSelect_INIT_enter);

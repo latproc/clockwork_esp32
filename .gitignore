@@ -2,3 +2,4 @@ build/
 misc/
 .vscode/
 sdkconfig
+main/Kconfig.projbuild

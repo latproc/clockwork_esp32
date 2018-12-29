@@ -4,6 +4,7 @@
 #define cw_OLIMEX_GATEWAY32_LED 33
 #define cw_OLIMEX_GATEWAY32_BUT1 34
 #define cw_OLIMEX_GATEWAY32_GPIO16 16
+#define cw_OLIMEX_GATEWAY32_GPIO17 17
 struct RTIOInterface *interface = RTIOInterface_get();
 while (!interface) {
   taskYIELD();
@@ -34,12 +35,21 @@ struct ANALOGOUTPUT *cw_inst_aout = create_cw_ANALOGOUTPUT("aout", cw_OLIMEX_GAT
 	struct IOItem *item_cw_inst_aout = IOItem_create(m, cw_ANALOGOUTPUT_getAddress(cw_inst_aout), cw_OLIMEX_GATEWAY32_GPIO16);
 	RTIOInterface_add(interface, item_cw_inst_aout);
 }
+struct PointOutput *cw_inst_direction = create_cw_PointOutput("direction", cw_OLIMEX_GATEWAY32_GPIO17);
+gpio_pad_select_gpio(cw_OLIMEX_GATEWAY32_GPIO17);
+gpio_set_direction(cw_OLIMEX_GATEWAY32_GPIO17, GPIO_MODE_OUTPUT);
+{
+	struct MachineBase *m = cw_PointOutput_To_MachineBase(cw_inst_direction);
+	if (m->init) m->init();
+	struct IOItem *item_cw_inst_direction = IOItem_create(m, cw_PointOutput_getAddress(cw_inst_direction), cw_OLIMEX_GATEWAY32_GPIO17);
+	RTIOInterface_add(interface, item_cw_inst_direction);
+}
 struct Pulse *cw_inst_pulser = create_cw_Pulse("pulser", cw_inst_led);
 {
 	struct MachineBase *m = cw_Pulse_To_MachineBase(cw_inst_pulser);
 	if (m->init) m->init();
 }
-struct Ramp *cw_inst_ramp = create_cw_Ramp("ramp", cw_inst_pulser, cw_inst_aout);
+struct Ramp *cw_inst_ramp = create_cw_Ramp("ramp", cw_inst_pulser, cw_inst_aout, cw_inst_direction);
 {
 	struct MachineBase *m = cw_Ramp_To_MachineBase(cw_inst_ramp);
 	if (m->init) m->init();
