@@ -19,6 +19,9 @@
 #define cw_message_turnOff -100
 #define cw_message_turnOn -101
 
+// standard symbols
+#define sym_VALUE 1
+
 extern SemaphoreHandle_t scheduler_sem;
 extern SemaphoreHandle_t process_sem;
 extern SemaphoreHandle_t runtime_mutex;

@@ -14,8 +14,16 @@ struct cw_ANALOGOUTPUT
   MachineBase *_module;
   int _offset;
   int _pwm_channel; // ESP32 specific - the channel that the gpio is linked to
+  int VALUE;
 };
 int cw_ANALOGOUTPUT_check_state(struct cw_ANALOGOUTPUT *m);
+int *cw_ANALOGOUTPUT_lookup(struct cw_ANALOGOUTPUT *m, int symbol) {
+	if (symbol == sym_VALUE) return &m->VALUE;
+	return 0;
+}
+MachineBase *cw_ANALOGOUTPUT_lookup_machine(MachineBase *m, int symbol) {
+	return 0;
+}
 struct cw_ANALOGOUTPUT *create_cw_ANALOGOUTPUT(const char *name, int pin, MachineBase *module, int offset, int channel)
 {
   struct cw_ANALOGOUTPUT *p = (struct cw_ANALOGOUTPUT *)malloc(sizeof(struct cw_ANALOGOUTPUT));
@@ -30,6 +38,8 @@ void Init_cw_ANALOGOUTPUT(struct cw_ANALOGOUTPUT *m, const char *name, int pin, 
   m->_offset = offset;
   m->_pwm_channel = channel;
   setup_pwm_gpio(channel, pin, 0);
+  m->machine.lookup = (lookup_func)cw_ANALOGOUTPUT_lookup;
+  m->machine.lookup_machine = (lookup_machine_func)cw_ANALOGOUTPUT_lookup_machine;
   
   m->machine.state = 0;
   m->machine.check_state = ( int(*)(MachineBase*) )cw_ANALOGOUTPUT_check_state;

@@ -12,8 +12,16 @@ struct cw_ANALOGINPUT
   int _offset;
   MachineBase *_filter_settings;
   int _adc_channel;
+  int VALUE;
 };
 int cw_ANALOGINPUT_check_state(struct cw_ANALOGINPUT *m);
+int *cw_ANALOGINPUT_lookup(struct cw_ANALOGINPUT *m, int symbol) {
+  if (symbol == sym_VALUE) return &m->VALUE;
+  return 0;
+}
+MachineBase *cw_ANALOGINPUT_lookup_machine(MachineBase *m, int symbol) {
+  return 0;
+}
 struct cw_ANALOGINPUT *create_cw_ANALOGINPUT(const char *name, int pin, MachineBase *module, int offset, int channel, MachineBase *filter_settings)
 {
   struct cw_ANALOGINPUT *p = (struct cw_ANALOGINPUT *)malloc(sizeof(struct cw_ANALOGINPUT));
@@ -28,6 +36,8 @@ void Init_cw_ANALOGINPUT(struct cw_ANALOGINPUT *m, const char *name, int pin, Ma
   m->_offset = offset;
   m->_adc_channel = channel;
   m->_filter_settings = filter_settings;
+  m->machine.lookup = (lookup_func)cw_ANALOGINPUT_lookup;
+  m->machine.lookup_machine = (lookup_machine_func)cw_ANALOGINPUT_lookup_machine;
   m->machine.state = 0;
   m->machine.check_state = ( int(*)(MachineBase*) )cw_ANALOGINPUT_check_state;
   markPending(&m->machine);

@@ -133,7 +133,7 @@ void writeIO() {
                 uint16_t cw_val = rt_get_io_uint16(item->data);
                 struct cw_ANALOGOUTPUT *a_out = (struct cw_ANALOGOUTPUT*)item->machine;
                 ledc_set_duty(LEDC_HIGH_SPEED_MODE, cw_ANALOGOUTPUT_get_channel(a_out), cw_val);
-                ledc_update_duty(LEDC_HIGH_SPEED_MODE, LEDC_CHANNEL_0);
+                ledc_update_duty(LEDC_HIGH_SPEED_MODE, cw_ANALOGOUTPUT_get_channel(a_out));
 #if DEBUG_LOG
                 //ESP_LOGI(TAG,"writeIO gpio set level of %d:%d (pin %d) to %d", item->data->io_offset, item->data->io_bitpos, item->gpio, cw_val);
 #endif
