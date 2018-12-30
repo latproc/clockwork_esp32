@@ -11,7 +11,9 @@
 #include "coroutine.h"
 
 #define FLAG_PASSIVE 0x1
+#define FLAG_SLEEPING 0x2
 #define MASK_PASSIVE 0xfe
+#define MASK_SLEEPING 0xfd
 #define state_INIT 0
 #define UNDEFINED_STATE -1
 
@@ -85,6 +87,9 @@ void markRunnable(MachineBase *m);
 MachineBase *nextRunnable();
 void markPending(MachineBase *m);
 void activatePending();
+void goto_sleep(MachineBase *m);
+void wake_up(MachineBase *m);
+int is_asleep(MachineBase *m);
 
 int stateCheckMachines(); // are there machines that need state rules evaluated?
 void markStateCheck(MachineBase *m);

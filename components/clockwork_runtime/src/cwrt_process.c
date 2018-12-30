@@ -30,14 +30,15 @@ void cwrt_process(unsigned long *last) {
             // process runnable machines
             while ( (m = nextRunnable()) != 0 ) {
                 if (m) {
+#if DEBUG_LOG
+                    ESP_LOGI(TAG,"%lld running machine [%d] %s", upTime(), m->id, m->name);
+#endif
                     struct ActionListItem *next_action;
                     next_action = list_top(&m->actions, struct ActionListItem, list);
                     if (m->executing(m) || next_action) {
-#if DEBUG_LOG
-                        ESP_LOGI(TAG,"%lld running machine [%d] %s", upTime(), m->id, m->name);
-#endif
+                        wake_up(m);
                         while (m->executing(m) || next_action) {
- #if DEBUG_LOG
+#if DEBUG_LOG
                            ESP_LOGI(TAG,"%lld executing action in [%d] %s", upTime(), m->id, m->name);
 #endif
                             if (m->executing(m) && !m->execute(m, &(m->ctx))){
@@ -46,7 +47,9 @@ void cwrt_process(unsigned long *last) {
 #endif
                                 // if the execute failed (returned 0) and is still executing, move on to the next machine
                                 if (m->executing(m)) {
-                                    markPending(m); // this machine needs more time to complete (TODO: only if it hasn't scheduled a wakeup)
+                                    if (!is_asleep(m))
+                                        markPending(m); // this machine needs more time to complete (TODO: only if it hasn't scheduled a wakeup)
+                                    ESP_LOGI(TAG,"%lld machine blocked [%d] %s", upTime(), m->id, m->name);
                                     goto machine_blocked;
                                 }
                             }

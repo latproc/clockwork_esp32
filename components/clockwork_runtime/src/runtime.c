@@ -230,6 +230,18 @@ void changeMachineState(struct MachineBase *m, int new_state, enter_func handler
     }
 }
 
+void goto_sleep(MachineBase *m) {
+    m->flags |= FLAG_SLEEPING;
+}
+
+void wake_up(MachineBase *m) {
+    m->flags &= MASK_SLEEPING;
+}
+
+int is_asleep(MachineBase *m) {
+    return m->flags & FLAG_SLEEPING;
+}
+
 void MachineDependencies_add(struct MachineBase *machine, struct MachineBase *dependent) {
     struct MachineListItem *item = (struct MachineListItem *)malloc(sizeof(struct MachineListItem));
     item->machine = dependent;
