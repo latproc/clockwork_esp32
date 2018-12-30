@@ -1,0 +1,4 @@
+#!/bin/bash
+#
+# update generated C files from the cw export location
+cd main && for i in *.h *.c *.inc; do [ -r /tmp/cw_export/$i ] && cp /tmp/cw_export/$i .; done;

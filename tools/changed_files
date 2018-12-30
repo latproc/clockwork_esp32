@@ -1,0 +1,3 @@
+#!/bin/sh
+cd main
+for i in *.{h,c} *.inc; do if [ -r /tmp/cw_export/$i ]; then cmp -s $i /tmp/cw_export/$i || echo $i ; fi;  done
