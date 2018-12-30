@@ -5,9 +5,7 @@
 #include <esp_log.h>
 
 #define DEBUG_LOG 0
-#if DEBUG_LOG
 static const char* TAG = "process";
-#endif
 
 void cwrt_process(unsigned long *last) {
     MachineBase *m = 0;
@@ -32,29 +30,42 @@ void cwrt_process(unsigned long *last) {
             // process runnable machines
             while ( (m = nextRunnable()) != 0 ) {
                 if (m) {
-#if DEBUG_LOG
-                    ESP_LOGI(TAG,"%lld running machine [%d] %s", upTime(), m->id, m->name);
-#endif
                     struct ActionListItem *next_action;
                     next_action = list_top(&m->actions, struct ActionListItem, list);
-                    if (m->executing(m)) {
-                        m->execute(m, &(m->ctx) );
-                        if (!m->executing(m)) {
-                            NotifyDependents(m); // finished execution
-                        }
-                        markPending(m);
-                    }
-                    else if (next_action) {
-                        next_action = list_pop(&m->actions, struct ActionListItem, list);
-                        m->execute = next_action->action;
-                        free(next_action);
-                        m->execute(m, &(m->ctx) );
-                        if (!m->executing(m)) {
+                    if (m->executing(m) || next_action) {
 #if DEBUG_LOG
-                            ESP_LOGI(TAG,"notifying dependents of %s", m->name);
+                        ESP_LOGI(TAG,"%lld running machine [%d] %s", upTime(), m->id, m->name);
 #endif
-                            NotifyDependents(m); // finished execution
+                        while (m->executing(m) || next_action) {
+ #if DEBUG_LOG
+                           ESP_LOGI(TAG,"%lld executing action in [%d] %s", upTime(), m->id, m->name);
+#endif
+                            if (m->executing(m) && !m->execute(m, &(m->ctx))){
+#if DEBUG_LOG
+                                ESP_LOGI(TAG,"%lld action did not complete in [%d] %s", upTime(), m->id, m->name);
+#endif
+                                // if the execute failed (returned 0) and is still executing, move on to the next machine
+                                if (m->executing(m)) {
+                                    markPending(m); // this machine needs more time to complete (TODO: only if it hasn't scheduled a wakeup)
+                                    goto machine_blocked;
+                                }
+                            }
+                            else if (m->executing(m)) {
+#if DEBUG_LOG
+                                ESP_LOGE(TAG,"%lld after executing, machine %s did not clean up action", upTime(), m->name);
+#endif
+                            }
+                            else if (next_action) {
+#if DEBUG_LOG
+                                ESP_LOGI(TAG,"%lld getting next action in [%d] %s", upTime(), m->id, m->name);
+#endif
+                                next_action = list_pop(&m->actions, struct ActionListItem, list);
+                                m->execute = next_action->action;
+                                free(next_action);
+                                next_action = list_top(&m->actions, struct ActionListItem, list);
+                            }
                         }
+                        NotifyDependents(m);
                         markPending(m);
                     }
                     else if (list_top(&m->messages, struct MessageListItem, list)) {
@@ -65,7 +76,7 @@ void cwrt_process(unsigned long *last) {
 #if DEBUG_LOG
                                 ESP_LOGI(TAG,"%lld sending [%d] to [%d]", upTime(), item->message, m->id);
 #endif
-                                m->handle(m, item->from, item->message);
+                                m->handle(m, item->from, item->message); //TODO: do we need to do anything special here w.r.t. coroutine handling?
                             }
                             free(item);
                             item = list_pop(&m->messages, struct MessageListItem, list);
@@ -75,6 +86,7 @@ void cwrt_process(unsigned long *last) {
                         markStateCheck(m);
                     }
                 }
+                machine_blocked: ;
             }
             while ( (m = nextStateCheck()) != 0 ) {
                 if (m) {
