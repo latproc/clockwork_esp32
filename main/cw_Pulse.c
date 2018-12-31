@@ -46,19 +46,16 @@ struct cw_Pulse *create_cw_Pulse(const char *name, MachineBase *out) {
 	return p;
 }
 int cw_Pulse_off_enter(struct cw_Pulse *m, ccrContParam) {
-	ccrBeginContext;
 	struct cw_Pulse_Vars *v;
-	ccrEndContext(ctx);
-
-	ccrBegin(ctx);
-	ctx->v = m->vars;
+	v = m->vars;
 	ESP_LOGI(TAG, "%lld %s", upTime(), " off");
 	cw_send(m->_out, &m->machine, cw_message_turnOff);
 	m->machine.execute = 0;
-	ccrFinish(1);
+	return 1;
 }
 int cw_Pulse_on_enter(struct cw_Pulse *m, ccrContParam) {
-	struct cw_Pulse_Vars *v = m->vars;
+	struct cw_Pulse_Vars *v;
+	v = m->vars;
 	ESP_LOGI(TAG, "%lld %s", upTime(), " on");
 	cw_send(m->_out, &m->machine, cw_message_turnOn);
 	m->machine.execute = 0;
@@ -69,21 +66,19 @@ int cw_Pulse_toggle_speed(struct cw_Pulse *m, ccrContParam) {
 	struct cw_Pulse_Vars *v;
 	unsigned long wait_start;
 	ccrEndContext(ctx);
-
 	ccrBegin(ctx);
 	ctx->v = m->vars;
 	ctx->wait_start = m->machine.TIMER;
-	if (m->machine.TIMER - ctx->wait_start < 15) {
-		struct RTScheduler *scheduler = RTScheduler_get();
-		while (!scheduler) {
-			taskYIELD();
-			scheduler = RTScheduler_get();
-		}
-		goto_sleep(&m->machine);
-
-		RTScheduler_add(scheduler, ScheduleItem_create(15 - (m->machine.TIMER - ctx->wait_start), &m->machine));
-		RTScheduler_release();
-		ccrReturn(0);
+	while (m->machine.TIMER - ctx->wait_start < 15) {
+	  struct RTScheduler *scheduler = RTScheduler_get();
+	  while (!scheduler) {
+	    taskYIELD();
+	    scheduler = RTScheduler_get();
+	  }
+	  goto_sleep(&m->machine);
+	  RTScheduler_add(scheduler, ScheduleItem_create(15 - (m->machine.TIMER - ctx->wait_start), &m->machine));
+	  RTScheduler_release();
+	  ccrReturn(0);
 	}
 	*ctx->v->l_delay = (1100 - *ctx->v->l_delay);
 	m->machine.execute = 0;

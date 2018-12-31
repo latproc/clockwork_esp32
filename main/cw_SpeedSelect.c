@@ -47,8 +47,8 @@ struct cw_SpeedSelect *create_cw_SpeedSelect(const char *name, MachineBase *butt
 	return p;
 }
 int cw_SpeedSelect_button_off_enter(struct cw_SpeedSelect *m, ccrContParam) {
-	struct cw_SpeedSelect_Vars *v = m->vars;
-// button.off_enter 
+	struct cw_SpeedSelect_Vars *v;
+	v = m->vars;
 	cw_send(m->_pulser, &m->machine, cw_message_toggle_speed);
 	m->machine.execute = 0;
 	return 1;

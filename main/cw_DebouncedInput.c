@@ -55,15 +55,15 @@ struct cw_DebouncedInput *create_cw_DebouncedInput(const char *name, MachineBase
 	return p;
 }
 int cw_DebouncedInput_off_enter(struct cw_DebouncedInput *m, ccrContParam) {
-	struct cw_DebouncedInput_Vars *v = m->vars;
-// off 
+	struct cw_DebouncedInput_Vars *v;
+	v = m->vars;
 	ESP_LOGI(TAG, "%lld %s", upTime(), "Debounce input off");
 	m->machine.execute = 0;
 	return 1;
 }
 int cw_DebouncedInput_on_enter(struct cw_DebouncedInput *m, ccrContParam) {
-	struct cw_DebouncedInput_Vars *v = m->vars;
-// on 
+	struct cw_DebouncedInput_Vars *v;
+	v = m->vars;
 	ESP_LOGI(TAG, "%lld %s", upTime(), "Debounced input on");
 	m->machine.execute = 0;
 	return 1;

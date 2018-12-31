@@ -5,4 +5,5 @@
 
 CXXFLAGS=-fpermissive
 CFLAGS += "-Wno-unused-variable"
+CFLAGS += "-Wno-unused-but-set-variable"
 
