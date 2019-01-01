@@ -7,6 +7,21 @@
 #define DEBUG_LOG 0
 static const char* TAG = "process";
 
+int split_params(char *cmd, const char *params[], int n) {
+    int i = 0;
+    params[i++] = cmd;
+    char *p = strchr(cmd, ' ');
+    while (p && *p) {
+        *p++ = 0; 
+        while (*p == ' ') ++p;
+        params[i++] = p;
+        p = strchr(p, ' ');
+        if (i>=n-1) break;
+    }
+    params[i] = 0;
+    return i;
+}
+
 void cwrt_process(unsigned long *last) {
     MachineBase *m = 0;
     if (xSemaphoreGive(scheduler_sem) != pdFAIL) {
@@ -91,6 +106,25 @@ void cwrt_process(unsigned long *last) {
                 }
                 machine_blocked: ;
             }
+
+            if (have_command()) {
+                char *cmd = pop_command();
+                if (cmd) {
+                    const char *params[8];
+                    split_params(cmd, params, 8);
+                    if (strcmp(params[0],"DESCRIBE") == 0 && params[1]) {
+                    MachineBase *m = getMachineIterator();
+                    while (m) {
+                        if (strcmp(m->name, params[1]) == 0)
+                            m->describe(m);
+                        m = nextMachine(m);
+                    }
+
+                    }
+                    free(cmd);
+                }
+            }
+
             while ( (m = nextStateCheck()) != 0 ) {
                 if (m) {
                     if (m->check_state && m->check_state(m)) { // state change

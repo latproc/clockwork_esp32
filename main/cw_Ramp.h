@@ -4,6 +4,7 @@
 #include "runtime.h"
 #define Value int
 struct cw_Ramp_Vars;
+struct cw_Ramp_Vars_backup;
 struct cw_Ramp {
 	MachineBase machine;
 	int gpio_pin;
@@ -16,6 +17,7 @@ struct cw_Ramp {
 	Value start; // 1000
 	Value step; // 800
 	struct cw_Ramp_Vars *vars;
+	struct cw_Ramp_Vars_backup *backup;
 };
 struct IOAddress *cw_Ramp_getAddress(struct cw_Ramp *p);
 struct cw_Ramp *create_cw_Ramp(const char *name, MachineBase *clock, MachineBase *output, MachineBase *forward);

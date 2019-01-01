@@ -19,6 +19,16 @@ struct cw_Pulse_Vars {
 	unsigned int l_on;
 	unsigned int *l_out;
 };
+struct cw_Pulse_Vars_backup {
+	struct cw_Pulse  m;
+	unsigned int l_INIT;
+	unsigned int  l_SELF;
+	unsigned long  l_TIMER;
+	Value  l_delay;
+	unsigned int l_off;
+	unsigned int l_on;
+	unsigned int  l_out;
+};
 static void init_Vars(struct cw_Pulse *m, struct cw_Pulse_Vars *v) {
 	v->m = m;
 	v->l_INIT = state_cw_INIT;
@@ -29,6 +39,17 @@ static void init_Vars(struct cw_Pulse *m, struct cw_Pulse_Vars *v) {
 	v->l_on = state_cw_on;
 	v->l_out = &m->_out->state;
 }
+static void backup_Vars(struct cw_Pulse *m) {
+	struct cw_Pulse_Vars *v = m->vars;
+	struct cw_Pulse_Vars_backup *b = m->backup;
+	b->l_INIT = v->l_INIT;
+	b->l_SELF = *v->l_SELF;
+	b->l_TIMER = *v->l_TIMER;
+	b->l_delay = *v->l_delay;
+	b->l_off = v->l_off;
+	b->l_on = v->l_on;
+	b->l_out = *v->l_out;
+}
 Value *cw_Pulse_lookup(struct cw_Pulse *m, int symbol) {
 	if (symbol == sym_delay) return &m->delay;
 	return 0;
@@ -37,6 +58,7 @@ MachineBase *cw_Pulse_lookup_machine(struct cw_Pulse *m, int symbol) {
 	if (symbol == sym_out) return m->_out;
 	return 0;
 }
+void cw_Pulse_describe(struct cw_Pulse *m);
 int cw_Pulse_handle_message(struct MachineBase *ramp, struct MachineBase *machine, int state);
 int cw_Pulse_check_state(struct cw_Pulse *m);
 uint64_t cw_Pulse_next_trigger_time(struct cw_Pulse *m, struct cw_Pulse_Vars *v);
@@ -115,7 +137,9 @@ void Init_cw_Pulse(struct cw_Pulse *m, const char *name, MachineBase *out) {
 	m->machine.handle = (message_func)cw_Pulse_handle_message; // handle message from other machines
 	m->machine.lookup = (lookup_func)cw_Pulse_lookup; // lookup symbols within this machine
 	m->machine.lookup_machine = (lookup_machine_func)cw_Pulse_lookup_machine; // lookup symbols within this machine
+	m->machine.describe = (describe_func)cw_Pulse_describe;
 	m->vars = (struct cw_Pulse_Vars *)malloc(sizeof(struct cw_Pulse_Vars));
+	m->backup = (struct cw_Pulse_Vars_backup *)malloc(sizeof(struct cw_Pulse_Vars_backup));
 	init_Vars(m, m->vars);
 	MachineActions_add(cw_Pulse_To_MachineBase(m), (enter_func)cw_Pulse_INIT_enter);
 	markPending(&m->machine);
@@ -129,7 +153,8 @@ int cw_Pulse_check_state(struct cw_Pulse *m) {
 	struct cw_Pulse_Vars *v = m->vars;
 	int res = 0;
 	int new_state = 0; enter_func new_state_enter = 0;
-	if (((*v->l_SELF == v->l_off) && (m->machine.TIMER >= *v->l_delay))) {
+	backup_Vars(m);
+	if (((*v->l_SELF == v->l_off) && (m->machine.TIMER >= *v->l_delay))) /* on */ {
 		new_state = state_cw_on;
 		new_state_enter = (enter_func)cw_Pulse_on_enter;
 	}
@@ -154,4 +179,17 @@ int cw_Pulse_check_state(struct cw_Pulse *m) {
 		RTScheduler_release();
 	}
 	return res;
+}
+void cw_Pulse_describe(struct cw_Pulse *m) {
+	struct cw_Pulse_Vars_backup *v = m->backup;
+{
+	char buf[100];
+	snprintf(buf, 100, "%s: %s  Class: Pulse", m->machine.name, name_from_id(m->machine.state));
+	sendMQTT("/response", buf);
+	snprintf(buf, 100, "Timer: %ld", m->machine.TIMER);
+	sendMQTT("/response", buf);
+}
+	char buf[200];
+	snprintf(buf, 200, "on [%d]: ((SELF (%ld) == off (%ld)) && (TIMER (%ld) >= delay (%ld)))",state_cw_on,(long)v->l_SELF,(long)v->l_off,(long)v->l_TIMER,(long)v->l_delay);
+	sendMQTT("/response", buf);
 }

@@ -4,6 +4,7 @@
 #include "runtime.h"
 #define Value int
 struct cw_Pulse_Vars;
+struct cw_Pulse_Vars_backup;
 struct cw_Pulse {
 	MachineBase machine;
 	int gpio_pin;
@@ -11,6 +12,7 @@ struct cw_Pulse {
 	MachineBase *_out;
 	Value delay; // 100
 	struct cw_Pulse_Vars *vars;
+	struct cw_Pulse_Vars_backup *backup;
 };
 struct IOAddress *cw_Pulse_getAddress(struct cw_Pulse *p);
 struct cw_Pulse *create_cw_Pulse(const char *name, MachineBase *out);

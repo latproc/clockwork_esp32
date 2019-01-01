@@ -12,3 +12,10 @@ config ESP_WIFI_PASSWORD
     help
 	WiFi password (WPA or WPA2) for the example to use.
 endmenu
+
+config ESP_MQTT_BROKER
+    string "MQTT Broker url"
+    default "mqtt://localhost:1883"
+    help
+	The address of the MQTT broker to forward update messages to and receive commands from.
+endmenu

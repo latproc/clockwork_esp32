@@ -24,6 +24,9 @@
 // standard symbols
 #define sym_VALUE 1
 
+extern int network_is_connected;
+extern int mqtt_is_connected;
+
 extern SemaphoreHandle_t scheduler_sem;
 extern SemaphoreHandle_t process_sem;
 extern SemaphoreHandle_t runtime_mutex;
@@ -39,6 +42,7 @@ typedef int (*enter_func)(struct MachineBase *, ccrContParam);
 typedef int (*message_func)(struct MachineBase *, struct MachineBase *, int state);
 typedef int* (*lookup_func)(struct MachineBase *, int symbol);
 typedef struct MachineBase* (*lookup_machine_func)(struct MachineBase *, int symbol);
+typedef void (*describe_func)(struct MachineBase *);
 
 typedef struct MachineBase {
 	struct MachineBase *p_next;
@@ -57,8 +61,14 @@ typedef struct MachineBase {
 	message_func handle; // handle messages
 	lookup_func lookup; // lookup symbols
 	lookup_machine_func lookup_machine; // lookup symbols
+	describe_func describe; // describe the current state
 	int (*check_state)(struct MachineBase *);
 } MachineBase;
+
+int haveMQTT();
+void setMQTTstate(int which);
+void publish_MQTT(MachineBase *m, int state);
+void sendMQTT(const char *topic, const char *data);
 
 struct MachineListItem {
     struct list_node list;
@@ -95,6 +105,9 @@ int stateCheckMachines(); // are there machines that need state rules evaluated?
 void markStateCheck(MachineBase *m);
 MachineBase *nextStateCheck();
 
+void push_command(char *cmd);
+int have_command();
+char *pop_command();
 
 void changeMachineState(struct MachineBase *, int new_state, enter_func handler);
 

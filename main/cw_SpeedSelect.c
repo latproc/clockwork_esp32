@@ -18,6 +18,15 @@ struct cw_SpeedSelect_Vars {
 	Value *l_pulser_delay;
 	unsigned int l_slow;
 };
+struct cw_SpeedSelect_Vars_backup {
+	struct cw_SpeedSelect  m;
+	unsigned int l_INIT;
+	unsigned int  l_button;
+	unsigned int l_fast;
+	unsigned int  l_pulser;
+	Value  l_pulser_delay;
+	unsigned int l_slow;
+};
 static void init_Vars(struct cw_SpeedSelect *m, struct cw_SpeedSelect_Vars *v) {
 	v->m = m;
 	v->l_INIT = state_cw_INIT;
@@ -31,6 +40,16 @@ static void init_Vars(struct cw_SpeedSelect *m, struct cw_SpeedSelect_Vars *v) {
 	}
 	v->l_slow = state_cw_slow;
 }
+static void backup_Vars(struct cw_SpeedSelect *m) {
+	struct cw_SpeedSelect_Vars *v = m->vars;
+	struct cw_SpeedSelect_Vars_backup *b = m->backup;
+	b->l_INIT = v->l_INIT;
+	b->l_button = *v->l_button;
+	b->l_fast = v->l_fast;
+	b->l_pulser = *v->l_pulser;
+	b->l_pulser_delay = *v->l_pulser_delay;
+	b->l_slow = v->l_slow;
+}
 Value *cw_SpeedSelect_lookup(struct cw_SpeedSelect *m, int symbol) {
 	return 0;
 }
@@ -39,6 +58,7 @@ MachineBase *cw_SpeedSelect_lookup_machine(struct cw_SpeedSelect *m, int symbol)
 	if (symbol == sym_pulser) return m->_pulser;
 	return 0;
 }
+void cw_SpeedSelect_describe(struct cw_SpeedSelect *m);
 int cw_SpeedSelect_handle_message(struct MachineBase *ramp, struct MachineBase *machine, int state);
 int cw_SpeedSelect_check_state(struct cw_SpeedSelect *m);
 struct cw_SpeedSelect *create_cw_SpeedSelect(const char *name, MachineBase *button, MachineBase *pulser) {
@@ -76,7 +96,9 @@ void Init_cw_SpeedSelect(struct cw_SpeedSelect *m, const char *name, MachineBase
 	m->machine.handle = (message_func)cw_SpeedSelect_handle_message; // handle message from other machines
 	m->machine.lookup = (lookup_func)cw_SpeedSelect_lookup; // lookup symbols within this machine
 	m->machine.lookup_machine = (lookup_machine_func)cw_SpeedSelect_lookup_machine; // lookup symbols within this machine
+	m->machine.describe = (describe_func)cw_SpeedSelect_describe;
 	m->vars = (struct cw_SpeedSelect_Vars *)malloc(sizeof(struct cw_SpeedSelect_Vars));
+	m->backup = (struct cw_SpeedSelect_Vars_backup *)malloc(sizeof(struct cw_SpeedSelect_Vars_backup));
 	init_Vars(m, m->vars);
 	MachineActions_add(cw_SpeedSelect_To_MachineBase(m), (enter_func)cw_SpeedSelect_INIT_enter);
 	markPending(&m->machine);
@@ -90,7 +112,8 @@ int cw_SpeedSelect_check_state(struct cw_SpeedSelect *m) {
 	struct cw_SpeedSelect_Vars *v = m->vars;
 	int res = 0;
 	int new_state = 0; enter_func new_state_enter = 0;
-	if ((*v->l_pulser_delay < 200)) {
+	backup_Vars(m);
+	if ((*v->l_pulser_delay < 200)) /* fast */ {
 		new_state = state_cw_fast;
 	}
 	else
@@ -103,4 +126,17 @@ int cw_SpeedSelect_check_state(struct cw_SpeedSelect *m) {
 		res = 1;
 	}
 	return res;
+}
+void cw_SpeedSelect_describe(struct cw_SpeedSelect *m) {
+	struct cw_SpeedSelect_Vars_backup *v = m->backup;
+{
+	char buf[100];
+	snprintf(buf, 100, "%s: %s  Class: SpeedSelect", m->machine.name, name_from_id(m->machine.state));
+	sendMQTT("/response", buf);
+	snprintf(buf, 100, "Timer: %ld", m->machine.TIMER);
+	sendMQTT("/response", buf);
+}
+	char buf[200];
+	snprintf(buf, 200, "fast [%d]: (pulser_delay (%ld) < 200)",state_cw_fast,(long)v->l_pulser_delay);
+	sendMQTT("/response", buf);
 }

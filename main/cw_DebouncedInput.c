@@ -21,6 +21,18 @@ struct cw_DebouncedInput_Vars {
 	Value *l_off_time;
 	unsigned int l_on;
 };
+struct cw_DebouncedInput_Vars_backup {
+	struct cw_DebouncedInput  m;
+	unsigned int l_INIT;
+	unsigned int  l_SELF;
+	unsigned long  l_TIMER;
+	Value  l_debounce_time;
+	unsigned int  l_in;
+	unsigned long  l_in_TIMER;
+	unsigned int l_off;
+	Value  l_off_time;
+	unsigned int l_on;
+};
 static void init_Vars(struct cw_DebouncedInput *m, struct cw_DebouncedInput_Vars *v) {
 	v->m = m;
 	v->l_INIT = state_cw_INIT;
@@ -37,6 +49,19 @@ static void init_Vars(struct cw_DebouncedInput *m, struct cw_DebouncedInput_Vars
 	v->l_off_time = &m->off_time;
 	v->l_on = state_cw_on;
 }
+static void backup_Vars(struct cw_DebouncedInput *m) {
+	struct cw_DebouncedInput_Vars *v = m->vars;
+	struct cw_DebouncedInput_Vars_backup *b = m->backup;
+	b->l_INIT = v->l_INIT;
+	b->l_SELF = *v->l_SELF;
+	b->l_TIMER = *v->l_TIMER;
+	b->l_debounce_time = *v->l_debounce_time;
+	b->l_in = *v->l_in;
+	b->l_in_TIMER = *v->l_in_TIMER;
+	b->l_off = v->l_off;
+	b->l_off_time = *v->l_off_time;
+	b->l_on = v->l_on;
+}
 Value *cw_DebouncedInput_lookup(struct cw_DebouncedInput *m, int symbol) {
 	if (symbol == sym_debounce_time) return &m->debounce_time;
 	if (symbol == sym_off_time) return &m->off_time;
@@ -46,6 +71,7 @@ MachineBase *cw_DebouncedInput_lookup_machine(struct cw_DebouncedInput *m, int s
 	if (symbol == sym_in) return m->_in;
 	return 0;
 }
+void cw_DebouncedInput_describe(struct cw_DebouncedInput *m);
 int cw_DebouncedInput_handle_message(struct MachineBase *ramp, struct MachineBase *machine, int state);
 int cw_DebouncedInput_check_state(struct cw_DebouncedInput *m);
 uint64_t cw_DebouncedInput_next_trigger_time(struct cw_DebouncedInput *m, struct cw_DebouncedInput_Vars *v);
@@ -100,7 +126,9 @@ void Init_cw_DebouncedInput(struct cw_DebouncedInput *m, const char *name, Machi
 	m->machine.handle = (message_func)cw_DebouncedInput_handle_message; // handle message from other machines
 	m->machine.lookup = (lookup_func)cw_DebouncedInput_lookup; // lookup symbols within this machine
 	m->machine.lookup_machine = (lookup_machine_func)cw_DebouncedInput_lookup_machine; // lookup symbols within this machine
+	m->machine.describe = (describe_func)cw_DebouncedInput_describe;
 	m->vars = (struct cw_DebouncedInput_Vars *)malloc(sizeof(struct cw_DebouncedInput_Vars));
+	m->backup = (struct cw_DebouncedInput_Vars_backup *)malloc(sizeof(struct cw_DebouncedInput_Vars_backup));
 	init_Vars(m, m->vars);
 	MachineActions_add(cw_DebouncedInput_To_MachineBase(m), (enter_func)cw_DebouncedInput_INIT_enter);
 	markPending(&m->machine);
@@ -114,7 +142,8 @@ int cw_DebouncedInput_check_state(struct cw_DebouncedInput *m) {
 	struct cw_DebouncedInput_Vars *v = m->vars;
 	int res = 0;
 	int new_state = 0; enter_func new_state_enter = 0;
-	if ((((*v->l_in == v->l_off) && (*v->l_in_TIMER >= *v->l_debounce_time)) || ((*v->l_SELF == v->l_off) && (m->machine.TIMER < *v->l_off_time)))) {
+	backup_Vars(m);
+	if ((((*v->l_in == v->l_off) && (*v->l_in_TIMER >= *v->l_debounce_time)) || ((*v->l_SELF == v->l_off) && (m->machine.TIMER < *v->l_off_time)))) /* off */ {
 		new_state = state_cw_off;
 		new_state_enter = (enter_func)cw_DebouncedInput_off_enter;
 	}
@@ -139,4 +168,17 @@ int cw_DebouncedInput_check_state(struct cw_DebouncedInput *m) {
 		RTScheduler_release();
 	}
 	return res;
+}
+void cw_DebouncedInput_describe(struct cw_DebouncedInput *m) {
+	struct cw_DebouncedInput_Vars_backup *v = m->backup;
+{
+	char buf[100];
+	snprintf(buf, 100, "%s: %s  Class: DebouncedInput", m->machine.name, name_from_id(m->machine.state));
+	sendMQTT("/response", buf);
+	snprintf(buf, 100, "Timer: %ld", m->machine.TIMER);
+	sendMQTT("/response", buf);
+}
+	char buf[200];
+	snprintf(buf, 200, "off [%d]: (((in (%ld) == off (%ld)) && (in_TIMER (%ld) >= debounce_time (%ld))) || ((SELF (%ld) == off (%ld)) && (TIMER (%ld) < off_time (%ld))))",state_cw_off,(long)v->l_in,(long)v->l_off,(long)v->l_in_TIMER,(long)v->l_debounce_time,(long)v->l_SELF,(long)v->l_off,(long)v->l_TIMER,(long)v->l_off_time);
+	sendMQTT("/response", buf);
 }

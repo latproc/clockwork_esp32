@@ -4,6 +4,7 @@
 #include "runtime.h"
 #define Value int
 struct cw_DebouncedInput_Vars;
+struct cw_DebouncedInput_Vars_backup;
 struct cw_DebouncedInput {
 	MachineBase machine;
 	int gpio_pin;
@@ -12,6 +13,7 @@ struct cw_DebouncedInput {
 	Value debounce_time; // 100
 	Value off_time; // 50
 	struct cw_DebouncedInput_Vars *vars;
+	struct cw_DebouncedInput_Vars_backup *backup;
 };
 struct IOAddress *cw_DebouncedInput_getAddress(struct cw_DebouncedInput *p);
 struct cw_DebouncedInput *create_cw_DebouncedInput(const char *name, MachineBase *in);

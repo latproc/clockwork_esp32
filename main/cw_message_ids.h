@@ -1,6 +1,8 @@
 #ifndef __cw_message_ids_h__
 #define __cw_message_ids_h__
 
+
+const char *name_from_id(int id);
 #define cw_message_INIT 1
 #define cw_message_bottom_forward 7
 #define cw_message_bottom_reverse 8
