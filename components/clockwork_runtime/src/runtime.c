@@ -247,6 +247,11 @@ int noExecutionStage(MachineBase *m) { return 0; }
 int stateExecutionStage(MachineBase *m) { return m->execute != 0; }
 int noAutoStateChanges(MachineBase*m) { return 0; }
 
+void default_set_value(MachineBase *m, int *p, int v) {
+    *p = v;
+    cw_send(m, 0, cw_message_property_change);
+}
+
 void initMachineBase(MachineBase *m, const char *name) {
 	m->p_next = first_machine;
     list_head_init(&m->depends);
@@ -268,6 +273,7 @@ void initMachineBase(MachineBase *m, const char *name) {
     m->lookup = 0;
     m->lookup_machine = 0;
     m->describe = 0;
+    m->set_value = default_set_value;
 	m->check_state = noAutoStateChanges;
 }
 

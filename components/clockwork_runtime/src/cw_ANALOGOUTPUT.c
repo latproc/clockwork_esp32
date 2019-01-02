@@ -30,6 +30,10 @@ struct cw_ANALOGOUTPUT *create_cw_ANALOGOUTPUT(const char *name, int pin, Machin
   Init_cw_ANALOGOUTPUT(p, name, pin, module, offset, channel);
   return p;
 }
+static void set_value(struct cw_ANALOGOUTPUT *m, int *p, int v) {
+  *p = v;
+  cw_ANALOGOUTPUT_set_value(m, v);
+}
 void Init_cw_ANALOGOUTPUT(struct cw_ANALOGOUTPUT *m, const char *name, int pin, MachineBase *module, int offset, int channel)
 {
   initMachineBase(&m->machine, name);
@@ -40,6 +44,7 @@ void Init_cw_ANALOGOUTPUT(struct cw_ANALOGOUTPUT *m, const char *name, int pin, 
   setup_pwm_gpio(channel, pin, 0);
   m->machine.lookup = (lookup_func)cw_ANALOGOUTPUT_lookup;
   m->machine.lookup_machine = (lookup_machine_func)cw_ANALOGOUTPUT_lookup_machine;
+  m->machine.set_value = set_value;
   
   m->machine.state = 0;
   m->machine.check_state = ( int(*)(MachineBase*) )cw_ANALOGOUTPUT_check_state;

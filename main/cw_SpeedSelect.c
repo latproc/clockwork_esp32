@@ -15,6 +15,7 @@ struct cw_SpeedSelect_Vars {
 	unsigned int *l_button;
 	unsigned int l_fast;
 	unsigned int *l_pulser;
+	MachineBase *l_m_pulser_delay;
 	Value *l_pulser_delay;
 	unsigned int l_slow;
 };
@@ -24,6 +25,7 @@ struct cw_SpeedSelect_Vars_backup {
 	unsigned int  l_button;
 	unsigned int l_fast;
 	unsigned int  l_pulser;
+	MachineBase  l_m_pulser_delay;
 	Value  l_pulser_delay;
 	unsigned int l_slow;
 };
@@ -36,6 +38,7 @@ static void init_Vars(struct cw_SpeedSelect *m, struct cw_SpeedSelect_Vars *v) {
 	{
 	MachineBase *mm = &m->machine;
 	mm = mm->lookup_machine(mm, sym_pulser);
+	v->l_m_pulser_delay = mm;
 	v->l_pulser_delay = mm->lookup(mm, sym_delay);
 	}
 	v->l_slow = state_cw_slow;

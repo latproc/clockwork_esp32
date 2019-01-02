@@ -5,6 +5,8 @@
 #define cw_OLIMEX_GATEWAY32_BUT1 34
 #define cw_OLIMEX_GATEWAY32_GPIO16 16
 #define cw_OLIMEX_GATEWAY32_GPIO17 17
+#define cw_OLIMEX_GATEWAY32_GPIO32 32
+#define cw_OLIMEX_GATEWAY32_GPIO11 11
 struct RTIOInterface *interface = RTIOInterface_get();
 while (!interface) {
   taskYIELD();
@@ -19,39 +21,51 @@ gpio_set_direction(cw_OLIMEX_GATEWAY32_BUT1, GPIO_MODE_INPUT);
 	struct IOItem *item_cw_inst_button = IOItem_create(m, cw_PointInput_getAddress(cw_inst_button), cw_OLIMEX_GATEWAY32_BUT1);
 	RTIOInterface_add(interface, item_cw_inst_button);
 }
-struct PointOutput *cw_inst_led = create_cw_PointOutput("led", cw_OLIMEX_GATEWAY32_LED);
+struct cw_ANALOGOUTPUT *cw_inst_left = create_cw_ANALOGOUTPUT("left", cw_OLIMEX_GATEWAY32_GPIO16, 0, 0, LEDC_CHANNEL_0);
+{
+	struct MachineBase *m = cw_ANALOGOUTPUT_To_MachineBase(cw_inst_left);
+	if (m->init) m->init();
+	struct IOItem *item_cw_inst_left = IOItem_create(m, cw_ANALOGOUTPUT_getAddress(cw_inst_left), cw_OLIMEX_GATEWAY32_GPIO16);
+	RTIOInterface_add(interface, item_cw_inst_left);
+}
+struct cw_ANALOGOUTPUT *cw_inst_right = create_cw_ANALOGOUTPUT("right", cw_OLIMEX_GATEWAY32_GPIO17, 0, 0, LEDC_CHANNEL_0);
+{
+	struct MachineBase *m = cw_ANALOGOUTPUT_To_MachineBase(cw_inst_right);
+	if (m->init) m->init();
+	struct IOItem *item_cw_inst_right = IOItem_create(m, cw_ANALOGOUTPUT_getAddress(cw_inst_right), cw_OLIMEX_GATEWAY32_GPIO17);
+	RTIOInterface_add(interface, item_cw_inst_right);
+}
+struct PointOutput *cw_inst_left_dir = create_cw_PointOutput("left_dir", cw_OLIMEX_GATEWAY32_GPIO32);
+gpio_pad_select_gpio(cw_OLIMEX_GATEWAY32_GPIO32);
+gpio_set_direction(cw_OLIMEX_GATEWAY32_GPIO32, GPIO_MODE_OUTPUT);
+{
+	struct MachineBase *m = cw_PointOutput_To_MachineBase(cw_inst_left_dir);
+	if (m->init) m->init();
+	struct IOItem *item_cw_inst_left_dir = IOItem_create(m, cw_PointOutput_getAddress(cw_inst_left_dir), cw_OLIMEX_GATEWAY32_GPIO32);
+	RTIOInterface_add(interface, item_cw_inst_left_dir);
+}
+struct PointOutput *cw_inst_right_dir = create_cw_PointOutput("right_dir", cw_OLIMEX_GATEWAY32_LED);
 gpio_pad_select_gpio(cw_OLIMEX_GATEWAY32_LED);
 gpio_set_direction(cw_OLIMEX_GATEWAY32_LED, GPIO_MODE_OUTPUT);
 {
-	struct MachineBase *m = cw_PointOutput_To_MachineBase(cw_inst_led);
+	struct MachineBase *m = cw_PointOutput_To_MachineBase(cw_inst_right_dir);
 	if (m->init) m->init();
-	struct IOItem *item_cw_inst_led = IOItem_create(m, cw_PointOutput_getAddress(cw_inst_led), cw_OLIMEX_GATEWAY32_LED);
-	RTIOInterface_add(interface, item_cw_inst_led);
+	struct IOItem *item_cw_inst_right_dir = IOItem_create(m, cw_PointOutput_getAddress(cw_inst_right_dir), cw_OLIMEX_GATEWAY32_LED);
+	RTIOInterface_add(interface, item_cw_inst_right_dir);
 }
-struct cw_ANALOGOUTPUT *cw_inst_aout = create_cw_ANALOGOUTPUT("aout", cw_OLIMEX_GATEWAY32_GPIO16, 0, 0, LEDC_CHANNEL_0);
-{
-	struct MachineBase *m = cw_ANALOGOUTPUT_To_MachineBase(cw_inst_aout);
-	if (m->init) m->init();
-	struct IOItem *item_cw_inst_aout = IOItem_create(m, cw_ANALOGOUTPUT_getAddress(cw_inst_aout), cw_OLIMEX_GATEWAY32_GPIO16);
-	RTIOInterface_add(interface, item_cw_inst_aout);
-}
-struct PointOutput *cw_inst_direction = create_cw_PointOutput("direction", cw_OLIMEX_GATEWAY32_GPIO17);
-gpio_pad_select_gpio(cw_OLIMEX_GATEWAY32_GPIO17);
-gpio_set_direction(cw_OLIMEX_GATEWAY32_GPIO17, GPIO_MODE_OUTPUT);
-{
-	struct MachineBase *m = cw_PointOutput_To_MachineBase(cw_inst_direction);
-	if (m->init) m->init();
-	struct IOItem *item_cw_inst_direction = IOItem_create(m, cw_PointOutput_getAddress(cw_inst_direction), cw_OLIMEX_GATEWAY32_GPIO17);
-	RTIOInterface_add(interface, item_cw_inst_direction);
-}
-struct cw_Pulse *cw_inst_pulser = create_cw_Pulse("pulser", (MachineBase*)cw_inst_led);
+struct cw_Pulse *cw_inst_pulser = create_cw_Pulse("pulser");
 {
 	struct MachineBase *m = cw_Pulse_To_MachineBase(cw_inst_pulser);
 	if (m->init) m->init();
 }
-struct cw_Ramp *cw_inst_ramp = create_cw_Ramp("ramp", (MachineBase*)cw_inst_pulser, (MachineBase*)cw_inst_aout, (MachineBase*)cw_inst_direction);
+struct cw_Ramp *cw_inst_left_motor = create_cw_Ramp("left_motor", (MachineBase*)cw_inst_pulser, (MachineBase*)cw_inst_left, (MachineBase*)cw_inst_left_dir);
 {
-	struct MachineBase *m = cw_Ramp_To_MachineBase(cw_inst_ramp);
+	struct MachineBase *m = cw_Ramp_To_MachineBase(cw_inst_left_motor);
+	if (m->init) m->init();
+}
+struct cw_Ramp *cw_inst_right_motor = create_cw_Ramp("right_motor", (MachineBase*)cw_inst_pulser, (MachineBase*)cw_inst_right, (MachineBase*)cw_inst_right_dir);
+{
+	struct MachineBase *m = cw_Ramp_To_MachineBase(cw_inst_right_motor);
 	if (m->init) m->init();
 }
 struct cw_DebouncedInput *cw_inst_d_button = create_cw_DebouncedInput("d_button", (MachineBase*)cw_inst_button);

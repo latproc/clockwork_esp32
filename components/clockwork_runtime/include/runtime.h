@@ -20,6 +20,7 @@
 // standard messages
 #define cw_message_turnOff -100
 #define cw_message_turnOn -101
+#define cw_message_property_change -102
 
 // standard symbols
 #define sym_VALUE 1
@@ -43,6 +44,7 @@ typedef int (*message_func)(struct MachineBase *, struct MachineBase *, int stat
 typedef int* (*lookup_func)(struct MachineBase *, int symbol);
 typedef struct MachineBase* (*lookup_machine_func)(struct MachineBase *, int symbol);
 typedef void (*describe_func)(struct MachineBase *);
+typedef void (*set_value_func)(struct MachineBase *, int *, int);
 
 typedef struct MachineBase {
 	struct MachineBase *p_next;
@@ -62,6 +64,7 @@ typedef struct MachineBase {
 	lookup_func lookup; // lookup symbols
 	lookup_machine_func lookup_machine; // lookup symbols
 	describe_func describe; // describe the current state
+	set_value_func set_value; // set a property value
 	int (*check_state)(struct MachineBase *);
 } MachineBase;
 

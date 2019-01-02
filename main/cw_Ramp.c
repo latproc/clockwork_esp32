@@ -28,6 +28,7 @@ struct cw_Ramp_Vars {
 	unsigned int l_off;
 	unsigned int l_on;
 	unsigned int *l_output;
+	MachineBase *l_m_output_VALUE;
 	Value *l_output_VALUE;
 	unsigned int l_rising;
 	Value *l_start;
@@ -48,6 +49,7 @@ struct cw_Ramp_Vars_backup {
 	unsigned int l_off;
 	unsigned int l_on;
 	unsigned int  l_output;
+	MachineBase  l_m_output_VALUE;
 	Value  l_output_VALUE;
 	unsigned int l_rising;
 	Value  l_start;
@@ -71,6 +73,7 @@ static void init_Vars(struct cw_Ramp *m, struct cw_Ramp_Vars *v) {
 	{
 	MachineBase *mm = &m->machine;
 	mm = mm->lookup_machine(mm, sym_output);
+	v->l_m_output_VALUE = mm;
 	v->l_output_VALUE = mm->lookup(mm, sym_VALUE);
 	}
 	v->l_rising = state_cw_rising;
@@ -124,8 +127,8 @@ struct cw_Ramp *create_cw_Ramp(const char *name, MachineBase *clock, MachineBase
 int cw_Ramp_INIT_enter(struct cw_Ramp *m, ccrContParam) {
 	struct cw_Ramp_Vars *v;
 	v = m->vars;
-	*v->l_output_VALUE = *v->l_start;
-	*v->l_direction = 1;
+	v->l_m_output_VALUE->set_value(v->l_m_output_VALUE,v->l_output_VALUE,*v->l_start);
+	m->machine.set_value(&m->machine, v->l_direction,1);
 	cw_send(m->_forward, &m->machine, cw_message_turnOn);
 	m->machine.execute = 0;
 	return 1;
@@ -133,8 +136,8 @@ int cw_Ramp_INIT_enter(struct cw_Ramp *m, ccrContParam) {
 int cw_Ramp_bottom_forward_enter(struct cw_Ramp *m, ccrContParam) {
 	struct cw_Ramp_Vars *v;
 	v = m->vars;
-	*v->l_output_VALUE = *v->l_start;
-	*v->l_direction = 1;
+	v->l_m_output_VALUE->set_value(v->l_m_output_VALUE,v->l_output_VALUE,*v->l_start);
+	m->machine.set_value(&m->machine, v->l_direction,1);
 	cw_send(m->_forward, &m->machine, cw_message_turnOff);
 	m->machine.execute = 0;
 	return 1;
@@ -142,8 +145,8 @@ int cw_Ramp_bottom_forward_enter(struct cw_Ramp *m, ccrContParam) {
 int cw_Ramp_bottom_reverse_enter(struct cw_Ramp *m, ccrContParam) {
 	struct cw_Ramp_Vars *v;
 	v = m->vars;
-	*v->l_output_VALUE = *v->l_start;
-	*v->l_direction = 1;
+	v->l_m_output_VALUE->set_value(v->l_m_output_VALUE,v->l_output_VALUE,*v->l_start);
+	m->machine.set_value(&m->machine, v->l_direction,1);
 	cw_send(m->_forward, &m->machine, cw_message_turnOn);
 	m->machine.execute = 0;
 	return 1;
@@ -151,15 +154,15 @@ int cw_Ramp_bottom_reverse_enter(struct cw_Ramp *m, ccrContParam) {
 int cw_Ramp_clock_on_enter(struct cw_Ramp *m, ccrContParam) {
 	struct cw_Ramp_Vars *v;
 	v = m->vars;
-	*v->l_output_VALUE = (*v->l_output_VALUE + (*v->l_direction * *v->l_step));
+	v->l_m_output_VALUE->set_value(v->l_m_output_VALUE,v->l_output_VALUE,(*v->l_output_VALUE + (*v->l_direction * *v->l_step)));
 	m->machine.execute = 0;
 	return 1;
 }
 int cw_Ramp_top_enter(struct cw_Ramp *m, ccrContParam) {
 	struct cw_Ramp_Vars *v;
 	v = m->vars;
-	*v->l_output_VALUE = *v->l_end;
-	*v->l_direction = -1;
+	v->l_m_output_VALUE->set_value(v->l_m_output_VALUE,v->l_output_VALUE,*v->l_end);
+	m->machine.set_value(&m->machine, v->l_direction,-1);
 	m->machine.execute = 0;
 	return 1;
 }

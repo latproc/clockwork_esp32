@@ -15,7 +15,7 @@ const char *name_from_id(int id);
 #define cw_message_slow 14
 #define cw_message_stable 5
 #define cw_message_stopped 11
-#define cw_message_toggle_speed 17
+#define cw_message_toggle_speed 18
 #define cw_message_top 12
 #define cw_message_unstable 4
 

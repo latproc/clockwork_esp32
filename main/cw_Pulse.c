@@ -17,7 +17,6 @@ struct cw_Pulse_Vars {
 	Value *l_delay;
 	unsigned int l_off;
 	unsigned int l_on;
-	unsigned int *l_out;
 };
 struct cw_Pulse_Vars_backup {
 	struct cw_Pulse  m;
@@ -27,7 +26,6 @@ struct cw_Pulse_Vars_backup {
 	Value  l_delay;
 	unsigned int l_off;
 	unsigned int l_on;
-	unsigned int  l_out;
 };
 static void init_Vars(struct cw_Pulse *m, struct cw_Pulse_Vars *v) {
 	v->m = m;
@@ -37,7 +35,6 @@ static void init_Vars(struct cw_Pulse *m, struct cw_Pulse_Vars *v) {
 	v->l_delay = &m->delay;
 	v->l_off = state_cw_off;
 	v->l_on = state_cw_on;
-	v->l_out = &m->_out->state;
 }
 static void backup_Vars(struct cw_Pulse *m) {
 	struct cw_Pulse_Vars *v = m->vars;
@@ -48,63 +45,29 @@ static void backup_Vars(struct cw_Pulse *m) {
 	b->l_delay = *v->l_delay;
 	b->l_off = v->l_off;
 	b->l_on = v->l_on;
-	b->l_out = *v->l_out;
 }
 Value *cw_Pulse_lookup(struct cw_Pulse *m, int symbol) {
 	if (symbol == sym_delay) return &m->delay;
 	return 0;
 }
 MachineBase *cw_Pulse_lookup_machine(struct cw_Pulse *m, int symbol) {
-	if (symbol == sym_out) return m->_out;
 	return 0;
 }
 void cw_Pulse_describe(struct cw_Pulse *m);
 int cw_Pulse_handle_message(struct MachineBase *ramp, struct MachineBase *machine, int state);
 int cw_Pulse_check_state(struct cw_Pulse *m);
 uint64_t cw_Pulse_next_trigger_time(struct cw_Pulse *m, struct cw_Pulse_Vars *v);
-struct cw_Pulse *create_cw_Pulse(const char *name, MachineBase *out) {
+struct cw_Pulse *create_cw_Pulse(const char *name) {
 	struct cw_Pulse *p = (struct cw_Pulse *)malloc(sizeof(struct cw_Pulse));
-	Init_cw_Pulse(p, name, out);
+	Init_cw_Pulse(p, name);
 	return p;
 }
-int cw_Pulse_off_enter(struct cw_Pulse *m, ccrContParam) {
-	struct cw_Pulse_Vars *v;
-	v = m->vars;
-	ESP_LOGI(TAG, "%lld %s", upTime(), " off");
-	cw_send(m->_out, &m->machine, cw_message_turnOff);
-	m->machine.execute = 0;
-	return 1;
-}
-int cw_Pulse_on_enter(struct cw_Pulse *m, ccrContParam) {
-	struct cw_Pulse_Vars *v;
-	v = m->vars;
-	ESP_LOGI(TAG, "%lld %s", upTime(), " on");
-	cw_send(m->_out, &m->machine, cw_message_turnOn);
-	m->machine.execute = 0;
-	return 1;
-}
 int cw_Pulse_toggle_speed(struct cw_Pulse *m, ccrContParam) {
-	ccrBeginContext;
 	struct cw_Pulse_Vars *v;
-	unsigned long wait_start;
-	ccrEndContext(ctx);
-	ccrBegin(ctx);
-	ctx->v = m->vars;
-	ctx->wait_start = m->machine.TIMER;
-	while (m->machine.TIMER - ctx->wait_start < 15) {
-	  struct RTScheduler *scheduler = RTScheduler_get();
-	  while (!scheduler) {
-	    taskYIELD();
-	    scheduler = RTScheduler_get();
-	  }
-	  goto_sleep(&m->machine);
-	  RTScheduler_add(scheduler, ScheduleItem_create(15 - (m->machine.TIMER - ctx->wait_start), &m->machine));
-	  RTScheduler_release();
-	  ccrReturn(0);
-	}
-	*ctx->v->l_delay = (1100 - *ctx->v->l_delay);
+	v = m->vars;
+	m->machine.set_value(&m->machine, v->l_delay,(1100 - *v->l_delay));
 	m->machine.execute = 0;
-	ccrFinish(1);
+	return 1;
 }
 int cw_Pulse_INIT_enter(struct cw_Pulse *m, ccrContParam) {
 	m->machine.execute = 0;
@@ -126,11 +89,9 @@ uint64_t cw_Pulse_next_trigger_time(struct cw_Pulse *m, struct cw_Pulse_Vars *v)
 	if (res == 1000000000) res = 0;
 	return res;
 }
-void Init_cw_Pulse(struct cw_Pulse *m, const char *name, MachineBase *out) {
+void Init_cw_Pulse(struct cw_Pulse *m, const char *name) {
 	initMachineBase(&m->machine, name);
 	init_io_address(&m->addr, 0, 0, 0, 0, iot_none, IO_STABLE);
-	m->_out = out;
-	if (out) MachineDependencies_add(out, cw_Pulse_To_MachineBase(m));
 	m->delay = 100;
 	m->machine.state = state_cw_INIT;
 	m->machine.check_state = ( int(*)(MachineBase*) )cw_Pulse_check_state;
@@ -156,12 +117,10 @@ int cw_Pulse_check_state(struct cw_Pulse *m) {
 	backup_Vars(m);
 	if (((*v->l_SELF == v->l_off) && (m->machine.TIMER >= *v->l_delay))) /* on */ {
 		new_state = state_cw_on;
-		new_state_enter = (enter_func)cw_Pulse_on_enter;
 	}
 	else
 	{
 		new_state = state_cw_off;
-		new_state_enter = (enter_func)cw_Pulse_off_enter;
 	}
 	if (new_state && new_state != m->machine.state) {
 		changeMachineState(cw_Pulse_To_MachineBase(m), new_state, new_state_enter); // TODO: fix me

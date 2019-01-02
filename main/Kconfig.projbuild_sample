@@ -11,7 +11,6 @@ config ESP_WIFI_PASSWORD
     default "mypassword"
     help
 	WiFi password (WPA or WPA2) for the example to use.
-endmenu
 
 config ESP_MQTT_BROKER
     string "MQTT Broker url"
