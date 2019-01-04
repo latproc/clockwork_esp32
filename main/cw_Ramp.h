@@ -14,7 +14,8 @@ struct cw_Ramp {
 	MachineBase *_forward;
 	Value direction; // 0
 	Value end; // 30000
-	Value start; // 1000
+	Value min; // 5000
+	Value start; // 5000
 	Value step; // 800
 	struct cw_Ramp_Vars *vars;
 	struct cw_Ramp_Vars_backup *backup;

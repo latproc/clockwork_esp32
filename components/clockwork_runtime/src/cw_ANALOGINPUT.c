@@ -3,17 +3,6 @@
 #include "cw_ANALOGINPUT.h"
 //static const char* TAG = "ANALOGINPUT";
 #define DEBUG_LOG 0
-struct cw_ANALOGINPUT
-{
-  MachineBase machine;
-  int gpio_pin;
-  struct IOAddress addr;
-  MachineBase *_module;
-  int _offset;
-  MachineBase *_filter_settings;
-  int _adc_channel;
-  int VALUE;
-};
 int cw_ANALOGINPUT_check_state(struct cw_ANALOGINPUT *m);
 int *cw_ANALOGINPUT_lookup(struct cw_ANALOGINPUT *m, int symbol) {
   if (symbol == sym_VALUE) return &m->VALUE;

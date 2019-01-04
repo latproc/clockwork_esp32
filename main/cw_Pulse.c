@@ -65,7 +65,7 @@ struct cw_Pulse *create_cw_Pulse(const char *name) {
 int cw_Pulse_toggle_speed(struct cw_Pulse *m, ccrContParam) {
 	struct cw_Pulse_Vars *v;
 	v = m->vars;
-	m->machine.set_value(&m->machine, v->l_delay,(1100 - *v->l_delay));
+	m->machine.set_value(&m->machine, "delay", v->l_delay,(1100 - *v->l_delay));
 	m->machine.execute = 0;
 	return 1;
 }

@@ -25,6 +25,7 @@ struct cw_Ramp_Vars {
 	Value *l_end;
 	unsigned int l_falling;
 	unsigned int *l_forward;
+	Value *l_min;
 	unsigned int l_off;
 	unsigned int l_on;
 	unsigned int *l_output;
@@ -46,6 +47,7 @@ struct cw_Ramp_Vars_backup {
 	Value  l_end;
 	unsigned int l_falling;
 	unsigned int  l_forward;
+	Value  l_min;
 	unsigned int l_off;
 	unsigned int l_on;
 	unsigned int  l_output;
@@ -67,6 +69,7 @@ static void init_Vars(struct cw_Ramp *m, struct cw_Ramp_Vars *v) {
 	v->l_end = &m->end;
 	v->l_falling = state_cw_falling;
 	v->l_forward = &m->_forward->state;
+	v->l_min = &m->min;
 	v->l_off = state_cw_off;
 	v->l_on = state_cw_on;
 	v->l_output = &m->_output->state;
@@ -93,6 +96,7 @@ static void backup_Vars(struct cw_Ramp *m) {
 	b->l_end = *v->l_end;
 	b->l_falling = v->l_falling;
 	b->l_forward = *v->l_forward;
+	b->l_min = *v->l_min;
 	b->l_off = v->l_off;
 	b->l_on = v->l_on;
 	b->l_output = *v->l_output;
@@ -106,6 +110,7 @@ static void backup_Vars(struct cw_Ramp *m) {
 Value *cw_Ramp_lookup(struct cw_Ramp *m, int symbol) {
 	if (symbol == sym_direction) return &m->direction;
 	if (symbol == sym_end) return &m->end;
+	if (symbol == sym_min) return &m->min;
 	if (symbol == sym_start) return &m->start;
 	if (symbol == sym_step) return &m->step;
 	return 0;
@@ -127,8 +132,8 @@ struct cw_Ramp *create_cw_Ramp(const char *name, MachineBase *clock, MachineBase
 int cw_Ramp_INIT_enter(struct cw_Ramp *m, ccrContParam) {
 	struct cw_Ramp_Vars *v;
 	v = m->vars;
-	v->l_m_output_VALUE->set_value(v->l_m_output_VALUE,v->l_output_VALUE,*v->l_start);
-	m->machine.set_value(&m->machine, v->l_direction,1);
+	v->l_m_output_VALUE->set_value(v->l_m_output_VALUE,"VALUE" ,v->l_output_VALUE,*v->l_start);
+	m->machine.set_value(&m->machine, "direction", v->l_direction,1);
 	cw_send(m->_forward, &m->machine, cw_message_turnOn);
 	m->machine.execute = 0;
 	return 1;
@@ -136,8 +141,8 @@ int cw_Ramp_INIT_enter(struct cw_Ramp *m, ccrContParam) {
 int cw_Ramp_bottom_forward_enter(struct cw_Ramp *m, ccrContParam) {
 	struct cw_Ramp_Vars *v;
 	v = m->vars;
-	v->l_m_output_VALUE->set_value(v->l_m_output_VALUE,v->l_output_VALUE,*v->l_start);
-	m->machine.set_value(&m->machine, v->l_direction,1);
+	v->l_m_output_VALUE->set_value(v->l_m_output_VALUE,"VALUE" ,v->l_output_VALUE,*v->l_min);
+	m->machine.set_value(&m->machine, "direction", v->l_direction,1);
 	cw_send(m->_forward, &m->machine, cw_message_turnOff);
 	m->machine.execute = 0;
 	return 1;
@@ -145,8 +150,8 @@ int cw_Ramp_bottom_forward_enter(struct cw_Ramp *m, ccrContParam) {
 int cw_Ramp_bottom_reverse_enter(struct cw_Ramp *m, ccrContParam) {
 	struct cw_Ramp_Vars *v;
 	v = m->vars;
-	v->l_m_output_VALUE->set_value(v->l_m_output_VALUE,v->l_output_VALUE,*v->l_start);
-	m->machine.set_value(&m->machine, v->l_direction,1);
+	v->l_m_output_VALUE->set_value(v->l_m_output_VALUE,"VALUE" ,v->l_output_VALUE,*v->l_min);
+	m->machine.set_value(&m->machine, "direction", v->l_direction,1);
 	cw_send(m->_forward, &m->machine, cw_message_turnOn);
 	m->machine.execute = 0;
 	return 1;
@@ -154,15 +159,15 @@ int cw_Ramp_bottom_reverse_enter(struct cw_Ramp *m, ccrContParam) {
 int cw_Ramp_clock_on_enter(struct cw_Ramp *m, ccrContParam) {
 	struct cw_Ramp_Vars *v;
 	v = m->vars;
-	v->l_m_output_VALUE->set_value(v->l_m_output_VALUE,v->l_output_VALUE,(*v->l_output_VALUE + (*v->l_direction * *v->l_step)));
+	v->l_m_output_VALUE->set_value(v->l_m_output_VALUE,"VALUE" ,v->l_output_VALUE,(*v->l_output_VALUE + (*v->l_direction * *v->l_step)));
 	m->machine.execute = 0;
 	return 1;
 }
 int cw_Ramp_top_enter(struct cw_Ramp *m, ccrContParam) {
 	struct cw_Ramp_Vars *v;
 	v = m->vars;
-	v->l_m_output_VALUE->set_value(v->l_m_output_VALUE,v->l_output_VALUE,*v->l_end);
-	m->machine.set_value(&m->machine, v->l_direction,-1);
+	v->l_m_output_VALUE->set_value(v->l_m_output_VALUE,"VALUE" ,v->l_output_VALUE,*v->l_end);
+	m->machine.set_value(&m->machine, "direction", v->l_direction,-1);
 	m->machine.execute = 0;
 	return 1;
 }
@@ -184,7 +189,8 @@ void Init_cw_Ramp(struct cw_Ramp *m, const char *name, MachineBase *clock, Machi
 	if (forward) MachineDependencies_add(forward, cw_Ramp_To_MachineBase(m));
 	m->direction = 0;
 	m->end = 30000;
-	m->start = 1000;
+	m->min = 5000;
+	m->start = 5000;
 	m->step = 800;
 	m->machine.state = state_cw_INIT;
 	m->machine.check_state = ( int(*)(MachineBase*) )cw_Ramp_check_state;
@@ -213,12 +219,12 @@ int cw_Ramp_check_state(struct cw_Ramp *m) {
 		new_state_enter = (enter_func)cw_Ramp_top_enter;
 	}
 	else
-	if ((((*v->l_output_VALUE <= *v->l_start) && (*v->l_direction < 0)) && (*v->l_forward == v->l_off))) /* bottom_reverse */ {
+	if ((((*v->l_output_VALUE <= *v->l_min) && (*v->l_direction < 0)) && (*v->l_forward == v->l_off))) /* bottom_reverse */ {
 		new_state = state_cw_bottom_reverse;
 		new_state_enter = (enter_func)cw_Ramp_bottom_reverse_enter;
 	}
 	else
-	if ((((*v->l_output_VALUE <= *v->l_start) && (*v->l_direction < 0)) && (*v->l_forward == v->l_on))) /* bottom_forward */ {
+	if ((((*v->l_output_VALUE <= *v->l_min) && (*v->l_direction < 0)) && (*v->l_forward == v->l_on))) /* bottom_forward */ {
 		new_state = state_cw_bottom_forward;
 		new_state_enter = (enter_func)cw_Ramp_bottom_forward_enter;
 	}
@@ -227,7 +233,7 @@ int cw_Ramp_check_state(struct cw_Ramp *m) {
 		new_state = state_cw_rising;
 	}
 	else
-	if (((*v->l_output_VALUE > *v->l_start) && (*v->l_direction < 0))) /* falling */ {
+	if (((*v->l_output_VALUE > *v->l_min) && (*v->l_direction < 0))) /* falling */ {
 		new_state = state_cw_falling;
 	}
 	else
@@ -253,12 +259,12 @@ void cw_Ramp_describe(struct cw_Ramp *m) {
 	char buf[200];
 	snprintf(buf, 200, "top [%d]: ((output_VALUE (%ld) >= end (%ld)) && (direction (%ld) > 0))",state_cw_top,(long)v->l_output_VALUE,(long)v->l_end,(long)v->l_direction);
 	sendMQTT("/response", buf);
-	snprintf(buf, 200, "bottom_reverse [%d]: (((output_VALUE (%ld) <= start (%ld)) && (direction (%ld) < 0)) && (forward (%ld) == off (%ld)))",state_cw_bottom_reverse,(long)v->l_output_VALUE,(long)v->l_start,(long)v->l_direction,(long)v->l_forward,(long)v->l_off);
+	snprintf(buf, 200, "bottom_reverse [%d]: (((output_VALUE (%ld) <= min (%ld)) && (direction (%ld) < 0)) && (forward (%ld) == off (%ld)))",state_cw_bottom_reverse,(long)v->l_output_VALUE,(long)v->l_min,(long)v->l_direction,(long)v->l_forward,(long)v->l_off);
 	sendMQTT("/response", buf);
-	snprintf(buf, 200, "bottom_forward [%d]: (((output_VALUE (%ld) <= start (%ld)) && (direction (%ld) < 0)) && (forward (%ld) == on (%ld)))",state_cw_bottom_forward,(long)v->l_output_VALUE,(long)v->l_start,(long)v->l_direction,(long)v->l_forward,(long)v->l_on);
+	snprintf(buf, 200, "bottom_forward [%d]: (((output_VALUE (%ld) <= min (%ld)) && (direction (%ld) < 0)) && (forward (%ld) == on (%ld)))",state_cw_bottom_forward,(long)v->l_output_VALUE,(long)v->l_min,(long)v->l_direction,(long)v->l_forward,(long)v->l_on);
 	sendMQTT("/response", buf);
 	snprintf(buf, 200, "rising [%d]: ((output_VALUE (%ld) < end (%ld)) && (direction (%ld) > 0))",state_cw_rising,(long)v->l_output_VALUE,(long)v->l_end,(long)v->l_direction);
 	sendMQTT("/response", buf);
-	snprintf(buf, 200, "falling [%d]: ((output_VALUE (%ld) > start (%ld)) && (direction (%ld) < 0))",state_cw_falling,(long)v->l_output_VALUE,(long)v->l_start,(long)v->l_direction);
+	snprintf(buf, 200, "falling [%d]: ((output_VALUE (%ld) > min (%ld)) && (direction (%ld) < 0))",state_cw_falling,(long)v->l_output_VALUE,(long)v->l_min,(long)v->l_direction);
 	sendMQTT("/response", buf);
 }

@@ -49,12 +49,21 @@ void publish_MQTT(MachineBase *m, int state) {
     char data[40];
     snprintf(buf, 40, "/sampler/%s", m->name);
     snprintf(data, 40, "%lld %s %s", upTime(), m->name, name_from_id(state));
-    int msg_id = esp_mqtt_client_publish(client, buf, data, 0, 0, 0);
+    esp_mqtt_client_publish(client, buf, data, 0, 0, 0);
+}
+
+void publish_MQTT_property(MachineBase *m, const char *name, int value) {
+    if (!haveMQTT()) return;
+    char buf[60];
+    char data[40];
+    snprintf(buf, 60, "/sampler/%s/%s", m->name, name);
+    snprintf(data, 40, "%lld %s %s %d", upTime(), m->name, name, value);
+    esp_mqtt_client_publish(client, buf, data, 0, 0, 0);
 }
 
 void sendMQTT(const char *topic, const char *data) {
     if (!haveMQTT()) return;
-    int msg_id = esp_mqtt_client_publish(client, topic, data, 0, 0, 0);
+    esp_mqtt_client_publish(client, topic, data, 0, 0, 0);
 }
 
 void rt_init(void) {
@@ -247,8 +256,9 @@ int noExecutionStage(MachineBase *m) { return 0; }
 int stateExecutionStage(MachineBase *m) { return m->execute != 0; }
 int noAutoStateChanges(MachineBase*m) { return 0; }
 
-void default_set_value(MachineBase *m, int *p, int v) {
+void default_set_value(MachineBase *m, const char *name, int *p, int v) {
     *p = v;
+    publish_MQTT_property(m, name, v);
     cw_send(m, 0, cw_message_property_change);
 }
 

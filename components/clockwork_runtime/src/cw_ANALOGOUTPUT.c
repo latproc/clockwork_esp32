@@ -6,16 +6,6 @@
 
 //static const char* TAG = "ANALOGOUTPUT";
 #define DEBUG_LOG 0
-struct cw_ANALOGOUTPUT
-{
-  MachineBase machine;
-  int gpio_pin;
-  struct IOAddress addr;
-  MachineBase *_module;
-  int _offset;
-  int _pwm_channel; // ESP32 specific - the channel that the gpio is linked to
-  int VALUE;
-};
 int cw_ANALOGOUTPUT_check_state(struct cw_ANALOGOUTPUT *m);
 int *cw_ANALOGOUTPUT_lookup(struct cw_ANALOGOUTPUT *m, int symbol) {
 	if (symbol == sym_VALUE) return &m->VALUE;
@@ -30,9 +20,9 @@ struct cw_ANALOGOUTPUT *create_cw_ANALOGOUTPUT(const char *name, int pin, Machin
   Init_cw_ANALOGOUTPUT(p, name, pin, module, offset, channel);
   return p;
 }
-static void set_value(struct cw_ANALOGOUTPUT *m, int *p, int v) {
+static void set_value(struct cw_ANALOGOUTPUT *m, const char *name, int *p, int v) {
   *p = v;
-  cw_ANALOGOUTPUT_set_value(m, v);
+  cw_ANALOGOUTPUT_set_value(m, name, v);
 }
 void Init_cw_ANALOGOUTPUT(struct cw_ANALOGOUTPUT *m, const char *name, int pin, MachineBase *module, int offset, int channel)
 {
@@ -81,9 +71,10 @@ int cw_ANALOGOUTPUT_check_state(struct cw_ANALOGOUTPUT *m)
     changeMachineState(cw_ANALOGOUTPUT_To_MachineBase(m), new_state, new_state_enter);
   return 1;
 }
-void cw_ANALOGOUTPUT_set_value (struct cw_ANALOGOUTPUT *output, uint16_t value) {
+void cw_ANALOGOUTPUT_set_value (struct cw_ANALOGOUTPUT *output, const char *name, uint16_t value) {
     rt_set_io_uint16(&output->addr, value);
     output->addr.status = IO_PENDING;
+    publish_MQTT_property(output, name, value);
 }
 int cw_ANALOGOUTPUT_get_channel(struct cw_ANALOGOUTPUT *output) {
   return output->_pwm_channel;

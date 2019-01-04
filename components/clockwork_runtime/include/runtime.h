@@ -44,7 +44,7 @@ typedef int (*message_func)(struct MachineBase *, struct MachineBase *, int stat
 typedef int* (*lookup_func)(struct MachineBase *, int symbol);
 typedef struct MachineBase* (*lookup_machine_func)(struct MachineBase *, int symbol);
 typedef void (*describe_func)(struct MachineBase *);
-typedef void (*set_value_func)(struct MachineBase *, int *, int);
+typedef void (*set_value_func)(struct MachineBase *, const char *, int *, int);
 
 typedef struct MachineBase {
 	struct MachineBase *p_next;
@@ -71,6 +71,7 @@ typedef struct MachineBase {
 int haveMQTT();
 void setMQTTstate(int which);
 void publish_MQTT(MachineBase *m, int state);
+void publish_MQTT_property(MachineBase *m, const char *name, int value);
 void sendMQTT(const char *topic, const char *data);
 
 struct MachineListItem {
