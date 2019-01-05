@@ -135,11 +135,11 @@ void cw_SpeedSelect_describe(struct cw_SpeedSelect *m) {
 {
 	char buf[100];
 	snprintf(buf, 100, "%s: %s  Class: SpeedSelect", m->machine.name, name_from_id(m->machine.state));
-	sendMQTT("/response", buf);
+	sendMQTT(0, "/response", buf);
 	snprintf(buf, 100, "Timer: %ld", m->machine.TIMER);
-	sendMQTT("/response", buf);
+	sendMQTT(0, "/response", buf);
 }
 	char buf[200];
 	snprintf(buf, 200, "fast [%d]: (pulser_delay (%ld) < 200)",state_cw_fast,(long)v->l_pulser_delay);
-	sendMQTT("/response", buf);
+	sendMQTT(0, "/response", buf);
 }

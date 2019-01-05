@@ -1,6 +1,7 @@
 #include <freertos/FreeRTOS.h>
 #include "runtime.h"
 #include <esp_log.h>
+#include "cw_MQTTBROKER.h"
 #include "mqtt_client.h"
 
 static const char* TAG = "Runtime";
@@ -33,17 +34,65 @@ uint64_t upTime() {
 
 const char *name_from_id();
 
+static esp_mqtt_client_handle_t system_client = 0;
+
 int haveMQTT() {
     return mqtt_is_connected;
 }
+
+void setMQTTclient(esp_mqtt_client_handle_t clt) {
+    system_client = clt;
+}
+
 
 void setMQTTstate(int which) {
     mqtt_is_connected = which;
 }
 
-extern esp_mqtt_client_handle_t client;
+static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
+{
+    esp_mqtt_client_handle_t client = event->client;
+    int msg_id;
+    // your_context_t *context = event->context;
+    switch (event->event_id) {
+        case MQTT_EVENT_CONNECTED:
+            ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED main");
+            setMQTTstate(1);
+            msg_id = esp_mqtt_client_subscribe(client, "/command", 0);
+            ESP_LOGI(TAG, "sent subscribe successful (/command), msg_id=%d", msg_id);
+            break;
+        case MQTT_EVENT_DISCONNECTED:
+            ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED main");
+            setMQTTstate(0);
+            break;
+        case MQTT_EVENT_SUBSCRIBED:
+            ESP_LOGI(TAG, "MQTT_EVENT_SUBSCRIBED, main msg_id=%d", event->msg_id);
+            break;
+        case MQTT_EVENT_UNSUBSCRIBED:
+            ESP_LOGI(TAG, "MQTT_EVENT_UNSUBSCRIBED, main msg_id=%d", event->msg_id);
+            break;
+        case MQTT_EVENT_PUBLISHED:
+            ESP_LOGI(TAG, "MQTT_EVENT_PUBLISHED, main msg_id=%d", event->msg_id);
+            break;
+        case MQTT_EVENT_DATA: {
+            char *cmd = malloc(event->data_len+1);
+            memcpy(cmd, event->data, event->data_len);
+            cmd[event->data_len] = 0;
+            ESP_LOGI(TAG, "MQTT_EVENT_DATA %s", cmd);
+            //printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
+            //printf("DATA=%.*s\r\n", event->data_len, event->data);
+            push_command(cmd);
+        }
+            break;
+        case MQTT_EVENT_ERROR:
+            ESP_LOGI(TAG, "MQTT_EVENT_ERROR main");
+            break;
+    }
+    return ESP_OK;
+}
 
-void publish_MQTT(MachineBase *m, int state) {
+void publish_MQTT(struct cw_MQTTBROKER *broker, MachineBase *m, int state) {
+    esp_mqtt_client_handle_t client = (broker) ? broker->client : system_client;
     if (!haveMQTT()) return;
     char buf[40];
     char data[40];
@@ -52,16 +101,20 @@ void publish_MQTT(MachineBase *m, int state) {
     esp_mqtt_client_publish(client, buf, data, 0, 0, 0);
 }
 
-void publish_MQTT_property(MachineBase *m, const char *name, int value) {
+void publish_MQTT_property(struct cw_MQTTBROKER *broker, MachineBase *m, const char *name, int value) {
+    //ESP_LOGI(TAG,"%lld publish_MQTT_property", upTime());
+    esp_mqtt_client_handle_t client = (broker) ? broker->client : system_client;
     if (!haveMQTT()) return;
     char buf[60];
     char data[40];
     snprintf(buf, 60, "/sampler/%s/%s", m->name, name);
     snprintf(data, 40, "%lld %s %s %d", upTime(), m->name, name, value);
+    //ESP_LOGI(TAG,"%lld publishing %s/%s", upTime(),buf, data);
     esp_mqtt_client_publish(client, buf, data, 0, 0, 0);
 }
 
-void sendMQTT(const char *topic, const char *data) {
+void sendMQTT(struct cw_MQTTBROKER *broker, const char *topic, const char *data) {
+    esp_mqtt_client_handle_t client = (broker) ? broker->client : system_client;
     if (!haveMQTT()) return;
     esp_mqtt_client_publish(client, topic, data, 0, 0, 0);
 }
@@ -78,6 +131,15 @@ void rt_init(void) {
     assert(runtime_mutex);
     list_head_init(&global_messages);
     list_head_init(&command_messages);
+
+    const esp_mqtt_client_config_t mqtt_cfg = {
+        .uri = CONFIG_ESP_MQTT_BROKER,
+        .event_handle = mqtt_event_handler,
+        //.cert_pem = (const char *)iot_eclipse_org_pem_start,
+    };
+    //system_client = esp_mqtt_client_init(&mqtt_cfg);
+    //esp_mqtt_client_start(system_client);
+
 }
 
 MachineBase *getMachineIterator() {
@@ -258,7 +320,7 @@ int noAutoStateChanges(MachineBase*m) { return 0; }
 
 void default_set_value(MachineBase *m, const char *name, int *p, int v) {
     *p = v;
-    publish_MQTT_property(m, name, v);
+    publish_MQTT_property(0, m, name, v);
     cw_send(m, 0, cw_message_property_change);
 }
 
@@ -303,7 +365,7 @@ void changeMachineState(struct MachineBase *m, int new_state, enter_func handler
         m->TIMER = 0;
         m->START = upTime();
         m->execute = handler;
-        publish_MQTT(m, new_state);
+        publish_MQTT(0, m, new_state);
     }
 }
 

@@ -252,19 +252,19 @@ void cw_Ramp_describe(struct cw_Ramp *m) {
 {
 	char buf[100];
 	snprintf(buf, 100, "%s: %s  Class: Ramp", m->machine.name, name_from_id(m->machine.state));
-	sendMQTT("/response", buf);
+	sendMQTT(0, "/response", buf);
 	snprintf(buf, 100, "Timer: %ld", m->machine.TIMER);
-	sendMQTT("/response", buf);
+	sendMQTT(0, "/response", buf);
 }
 	char buf[200];
 	snprintf(buf, 200, "top [%d]: ((output_VALUE (%ld) >= end (%ld)) && (direction (%ld) > 0))",state_cw_top,(long)v->l_output_VALUE,(long)v->l_end,(long)v->l_direction);
-	sendMQTT("/response", buf);
+	sendMQTT(0, "/response", buf);
 	snprintf(buf, 200, "bottom_reverse [%d]: (((output_VALUE (%ld) <= min (%ld)) && (direction (%ld) < 0)) && (forward (%ld) == off (%ld)))",state_cw_bottom_reverse,(long)v->l_output_VALUE,(long)v->l_min,(long)v->l_direction,(long)v->l_forward,(long)v->l_off);
-	sendMQTT("/response", buf);
+	sendMQTT(0, "/response", buf);
 	snprintf(buf, 200, "bottom_forward [%d]: (((output_VALUE (%ld) <= min (%ld)) && (direction (%ld) < 0)) && (forward (%ld) == on (%ld)))",state_cw_bottom_forward,(long)v->l_output_VALUE,(long)v->l_min,(long)v->l_direction,(long)v->l_forward,(long)v->l_on);
-	sendMQTT("/response", buf);
+	sendMQTT(0, "/response", buf);
 	snprintf(buf, 200, "rising [%d]: ((output_VALUE (%ld) < end (%ld)) && (direction (%ld) > 0))",state_cw_rising,(long)v->l_output_VALUE,(long)v->l_end,(long)v->l_direction);
-	sendMQTT("/response", buf);
+	sendMQTT(0, "/response", buf);
 	snprintf(buf, 200, "falling [%d]: ((output_VALUE (%ld) > min (%ld)) && (direction (%ld) < 0))",state_cw_falling,(long)v->l_output_VALUE,(long)v->l_min,(long)v->l_direction);
-	sendMQTT("/response", buf);
+	sendMQTT(0, "/response", buf);
 }

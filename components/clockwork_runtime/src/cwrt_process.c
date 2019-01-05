@@ -64,7 +64,7 @@ void cwrt_process(unsigned long *last) {
                                 if (m->executing(m)) {
                                     if (!is_asleep(m))
                                         markPending(m); // this machine needs more time to complete (TODO: only if it hasn't scheduled a wakeup)
-                                    ESP_LOGI(TAG,"%lld machine blocked [%d] %s", upTime(), m->id, m->name);
+                                    //ESP_LOGI(TAG,"%lld machine blocked [%d] %s", upTime(), m->id, m->name);
                                     goto machine_blocked;
                                 }
                             }
@@ -107,24 +107,6 @@ void cwrt_process(unsigned long *last) {
                 machine_blocked: ;
             }
 
-            if (have_command()) {
-                char *cmd = pop_command();
-                if (cmd) {
-                    const char *params[8];
-                    split_params(cmd, params, 8);
-                    if (strcmp(params[0],"DESCRIBE") == 0 && params[1]) {
-                    MachineBase *m = getMachineIterator();
-                    while (m) {
-                        if (strcmp(m->name, params[1]) == 0)
-                            m->describe(m);
-                        m = nextMachine(m);
-                    }
-
-                    }
-                    free(cmd);
-                }
-            }
-
             while ( (m = nextStateCheck()) != 0 ) {
                 if (m) {
                     if (m->check_state && m->check_state(m)) { // state change
@@ -145,6 +127,25 @@ void cwrt_process(unsigned long *last) {
                 }
             }
         }
+
+        if (have_command()) {
+            char *cmd = pop_command();
+            if (cmd) {
+                const char *params[8];
+                split_params(cmd, params, 8);
+                if (strcmp(params[0],"DESCRIBE") == 0 && params[1]) {
+                MachineBase *m = getMachineIterator();
+                while (m) {
+                    if (strcmp(m->name, params[1]) == 0)
+                        m->describe(m);
+                    m = nextMachine(m);
+                }
+
+                }
+                free(cmd);
+            }
+        }
+
         activatePending();
 
         unsigned long now = upTime();

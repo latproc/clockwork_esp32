@@ -9,6 +9,7 @@
 #include <ccan/list/list.h>
 #include <inttypes.h>
 #include "coroutine.h"
+#include "mqtt_client.h"
 
 #define FLAG_PASSIVE 0x1
 #define FLAG_SLEEPING 0x2
@@ -24,9 +25,10 @@
 
 // standard symbols
 #define sym_VALUE 1
+#define sym_broker 2
+#define sym_message 3
 
 extern int network_is_connected;
-extern int mqtt_is_connected;
 
 extern SemaphoreHandle_t scheduler_sem;
 extern SemaphoreHandle_t process_sem;
@@ -39,6 +41,8 @@ void cwrt_setup(void);
 void cwrt_process(unsigned long *);
 
 struct MachineBase;
+struct cw_MQTTBROKER;
+
 typedef int (*enter_func)(struct MachineBase *, ccrContParam);
 typedef int (*message_func)(struct MachineBase *, struct MachineBase *, int state);
 typedef int* (*lookup_func)(struct MachineBase *, int symbol);
@@ -69,10 +73,11 @@ typedef struct MachineBase {
 } MachineBase;
 
 int haveMQTT();
+void setMQTTclient(esp_mqtt_client_handle_t client);
 void setMQTTstate(int which);
-void publish_MQTT(MachineBase *m, int state);
-void publish_MQTT_property(MachineBase *m, const char *name, int value);
-void sendMQTT(const char *topic, const char *data);
+void publish_MQTT(struct cw_MQTTBROKER *broker, MachineBase *m, int state);
+void publish_MQTT_property(struct cw_MQTTBROKER *broker, MachineBase *m, const char *name, int value);
+void sendMQTT(struct cw_MQTTBROKER *broker, const char *topic, const char *data);
 
 struct MachineListItem {
     struct list_node list;

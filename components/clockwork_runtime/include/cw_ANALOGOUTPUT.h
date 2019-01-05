@@ -12,7 +12,7 @@ struct cw_ANALOGOUTPUT
   struct IOAddress addr;
   MachineBase *_module;
   int _offset;
-  int _pwm_channel; // ESP32 specific - the channel that the gpio is linked to
+  int channel; // ESP32 specific - the channel that the gpio is linked to
   int VALUE;
 };
 struct cw_ANALOGOUTPUT *create_cw_ANALOGOUTPUT(const char *name, int pin, MachineBase *module, int offset, int channel);

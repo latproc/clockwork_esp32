@@ -1,8 +1,11 @@
+#include "driver/gpio.h"
+#include "driver/adc.h"
 
 #include "base_includes.h"
 #include "cw_ANALOGINPUT.h"
 //static const char* TAG = "ANALOGINPUT";
 #define DEBUG_LOG 0
+void cw_ANALOGINPUT_describe(struct cw_ANALOGINPUT *m);
 int cw_ANALOGINPUT_check_state(struct cw_ANALOGINPUT *m);
 int *cw_ANALOGINPUT_lookup(struct cw_ANALOGINPUT *m, int symbol) {
   if (symbol == sym_VALUE) return &m->VALUE;
@@ -21,6 +24,7 @@ void Init_cw_ANALOGINPUT(struct cw_ANALOGINPUT *m, const char *name, int pin, Ma
 {
   initMachineBase(&m->machine, name);
   init_io_address(&m->addr, 0, 0, 0,  16, iot_none, IO_STABLE);
+  m->gpio_pin = pin;
   m->_module = module;
   m->_offset = offset;
   m->_adc_channel = channel;
@@ -29,6 +33,8 @@ void Init_cw_ANALOGINPUT(struct cw_ANALOGINPUT *m, const char *name, int pin, Ma
   m->machine.lookup_machine = (lookup_machine_func)cw_ANALOGINPUT_lookup_machine;
   m->machine.state = 0;
   m->machine.check_state = ( int(*)(MachineBase*) )cw_ANALOGINPUT_check_state;
+  m->machine.describe = cw_ANALOGINPUT_describe;
+  adc1_config_channel_atten(pin, ADC_ATTEN_DB_0);
   markPending(&m->machine);
 }
 struct IOAddress *cw_ANALOGINPUT_getAddress(struct cw_ANALOGINPUT *p)
@@ -64,4 +70,9 @@ int cw_ANALOGINPUT_check_state(struct cw_ANALOGINPUT *m)
   if (new_state != m->machine.state)
     changeMachineState(cw_ANALOGINPUT_To_MachineBase(m), new_state, new_state_enter);
   return 1;
+}
+void cw_ANALOGINPUT_describe(struct cw_ANALOGINPUT *m) {
+	char buf[100];
+	snprintf(buf, 100, "%s: %d Class: ANALOGINPUT", m->machine.name, m->VALUE);
+	sendMQTT(0, "/response", buf);
 }
