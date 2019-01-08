@@ -7,14 +7,14 @@
 static const char* TAG = "Ramp";
 
 #define state_cw_INIT 1
-#define state_cw_bottom_forward 7
-#define state_cw_bottom_reverse 8
-#define state_cw_falling 9
+#define state_cw_bottom_forward 6
+#define state_cw_bottom_reverse 7
+#define state_cw_falling 8
 #define state_cw_off 2
 #define state_cw_on 3
-#define state_cw_rising 10
-#define state_cw_stopped 11
-#define state_cw_top 12
+#define state_cw_rising 9
+#define state_cw_stopped 10
+#define state_cw_top 11
 struct cw_Ramp_Vars {
 	struct cw_Ramp *m;
 	unsigned int l_INIT;
@@ -254,7 +254,7 @@ void cw_Ramp_describe(struct cw_Ramp *m) {
 	snprintf(buf, 100, "%s: %s  Class: Ramp", m->machine.name, name_from_id(m->machine.state));
 	sendMQTT(0, "/response", buf);
 	snprintf(buf, 100, "Timer: %ld", m->machine.TIMER);
-	sendMQTT(0, "/response", buf);
+	sendMQTT(0,"/response", buf);
 }
 	char buf[200];
 	snprintf(buf, 200, "top [%d]: ((output_VALUE (%ld) >= end (%ld)) && (direction (%ld) > 0))",state_cw_top,(long)v->l_output_VALUE,(long)v->l_end,(long)v->l_direction);

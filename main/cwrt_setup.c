@@ -26,21 +26,6 @@
 
 static const char* TAG = "setup";
 
-//struct cw_Pulse *flasher0;
-//struct cw_Pulse *flasher1;
-//struct cw_ANALOGINPUT *ain1;
-//struct cw_ANALOGOUTPUT *aout1;
-//struct cw_Ramp *ramp0;
-//struct cw_SpeedSelect *speed_select1;
-//struct cw_DebouncedInput *d_in1;
-
-//#define point_in1 23 //lolin32
-//#define point_out1 22 // lolin32
-//#define aout1_pin 33 // lolin32
-//#define ain1_pin ADC1_CHANNEL_7 // GPIO35
-//#define point_out1 GPIO_NUM_33 // esp32_gateway LEF
-//#define point_in1 GPIO_NUM_34 // esp32_gateway BUT1
-//#define aout1_pin GPIO_NUM_16 // esp32_gateway
 #define V_REF 1100
 
 void cwrt_setup() {

@@ -7,8 +7,8 @@
 static const char* TAG = "SpeedSelect";
 
 #define state_cw_INIT 1
-#define state_cw_fast 13
-#define state_cw_slow 14
+#define state_cw_fast 12
+#define state_cw_slow 13
 struct cw_SpeedSelect_Vars {
 	struct cw_SpeedSelect *m;
 	unsigned int l_INIT;
@@ -137,7 +137,7 @@ void cw_SpeedSelect_describe(struct cw_SpeedSelect *m) {
 	snprintf(buf, 100, "%s: %s  Class: SpeedSelect", m->machine.name, name_from_id(m->machine.state));
 	sendMQTT(0, "/response", buf);
 	snprintf(buf, 100, "Timer: %ld", m->machine.TIMER);
-	sendMQTT(0, "/response", buf);
+	sendMQTT(0,"/response", buf);
 }
 	char buf[200];
 	snprintf(buf, 200, "fast [%d]: (pulser_delay (%ld) < 200)",state_cw_fast,(long)v->l_pulser_delay);

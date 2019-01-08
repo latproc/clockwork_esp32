@@ -146,7 +146,7 @@ void cw_Pulse_describe(struct cw_Pulse *m) {
 	snprintf(buf, 100, "%s: %s  Class: Pulse", m->machine.name, name_from_id(m->machine.state));
 	sendMQTT(0, "/response", buf);
 	snprintf(buf, 100, "Timer: %ld", m->machine.TIMER);
-	sendMQTT(0, "/response", buf);
+	sendMQTT(0,"/response", buf);
 }
 	char buf[200];
 	snprintf(buf, 200, "on [%d]: ((SELF (%ld) == off (%ld)) && (TIMER (%ld) >= delay (%ld)))",state_cw_on,(long)v->l_SELF,(long)v->l_off,(long)v->l_TIMER,(long)v->l_delay);

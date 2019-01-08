@@ -176,7 +176,7 @@ void cw_DebouncedInput_describe(struct cw_DebouncedInput *m) {
 	snprintf(buf, 100, "%s: %s  Class: DebouncedInput", m->machine.name, name_from_id(m->machine.state));
 	sendMQTT(0, "/response", buf);
 	snprintf(buf, 100, "Timer: %ld", m->machine.TIMER);
-	sendMQTT(0, "/response", buf);
+	sendMQTT(0,"/response", buf);
 }
 	char buf[200];
 	snprintf(buf, 200, "off [%d]: (((in (%ld) == off (%ld)) && (in_TIMER (%ld) >= debounce_time (%ld))) || ((SELF (%ld) == off (%ld)) && (TIMER (%ld) < off_time (%ld))))",state_cw_off,(long)v->l_in,(long)v->l_off,(long)v->l_in_TIMER,(long)v->l_debounce_time,(long)v->l_SELF,(long)v->l_off,(long)v->l_TIMER,(long)v->l_off_time);
