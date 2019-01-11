@@ -5,11 +5,6 @@
 #define DEBUG_LOG 0
 static const char* TAG = "MQTTBROKER";
 
-struct SubscriberListItem {
-    struct list_node list;
-	struct cw_MQTTSUBSCRIBER *s;
-};
-
 static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
 {
     esp_mqtt_client_handle_t client = event->client;
@@ -44,33 +39,7 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
             ESP_LOGI(TAG, "MQTT_EVENT_PUBLISHED, %s msg_id=%d", context->machine.name, event->msg_id);
             break;
         case MQTT_EVENT_DATA:
-            //ESP_LOGI(TAG, "MQTT_EVENT_DATA TOPIC=%.*s", event->topic_len, event->topic);
-			if (strncmp(event->topic, "/command", event->topic_len) == 0) {
-				char *cmd = malloc(event->data_len+1);
-				memcpy(cmd, event->data, event->data_len);
-				cmd[event->data_len] = 0;
-				//ESP_LOGI(TAG, "MQTT_EVENT_DATA %s", cmd);
-				//printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
-				//printf("DATA=%.*s\r\n", event->data_len, event->data);
-				push_command(cmd);
-			}
-			else {
-				//printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
-				//printf("DATA=%.*s\r\n", event->data_len, event->data);
-				char buf[event->data_len+1];
-				memcpy(buf, event->data, event->data_len);
-				buf[event->data_len] = 0;
-				char *p;
-				long val = strtol(buf, &p, 10);
-				struct SubscriberListItem *item, *next;
-				list_for_each_safe(&context->subscribers, item, next, list) {
-					if (item->s && strncmp(item->s->topic, event->topic, event->topic_len) == 0) {
-						item->s->machine.set_value(item->s, "message", &item->s->message, (int)val);
-						NotifyDependents(&item->s->machine);
-						markPending(&item->s->machine);
-					}
-				}
-			}
+			receiveMQTT(context, event->topic, event->topic_len, event->data, event->data_len);
             break;
         case MQTT_EVENT_ERROR:
             ESP_LOGI(TAG, "MQTT_EVENT_ERROR %s", context->machine.name);
@@ -124,7 +93,7 @@ int cw_MQTTBROKER_INIT_enter(struct cw_MQTTBROKER *m, ccrContParam) {
 	return 1;
 };
 int cw_MQTTBROKER_handle_message(struct MachineBase *obj, struct MachineBase *source, int state) {
-	struct cw_MQTTBROKER *m = (struct cw_MQTTBROKER *)obj;
+	//struct cw_MQTTBROKER *m = (struct cw_MQTTBROKER *)obj;
 	markPending(obj);
 	return 1;
 }

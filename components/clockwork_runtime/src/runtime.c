@@ -2,6 +2,7 @@
 #include "runtime.h"
 #include <esp_log.h>
 #include "cw_MQTTBROKER.h"
+#include "cw_MQTTSUBSCRIBER.h"
 #include "mqtt_client.h"
 
 static const char* TAG = "Runtime";
@@ -13,9 +14,11 @@ SemaphoreHandle_t scheduler_sem = 0;
 SemaphoreHandle_t process_sem = 0;
 SemaphoreHandle_t io_interface_sem = 0;
 SemaphoreHandle_t runtime_mutex = 0;
+SemaphoreHandle_t message_mutex = 0;
 
 struct list_head global_messages;
 struct list_head command_messages;
+struct list_head external_messages;
 
 int network_is_connected = 0;
 int mqtt_is_connected = 0;
@@ -91,32 +94,143 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
     return ESP_OK;
 }
 
+struct ExternalMessageItem {
+	struct list_node list;
+    struct cw_MQTTSUBSCRIBER *s;
+    int message;
+};
+
+static void push_message(struct cw_MQTTSUBSCRIBER *s, int message) {
+    BaseType_t res = xSemaphoreTakeRecursive(message_mutex,10);
+    if (res == pdPASS) {
+        //ESP_LOGI(TAG, "push_message got message_mutex");
+        struct ExternalMessageItem *item = (struct ExternalMessageItem*) malloc(sizeof(struct ExternalMessageItem));
+        item->s = s;
+        item->message = message;
+        list_add_tail(&external_messages, &item->list);
+        res = xSemaphoreGiveRecursive(message_mutex);
+        assert(res == pdPASS);
+        //ESP_LOGI(TAG, "push_message released message_mutex");
+    }
+    else {
+        //ESP_LOGI(TAG, "failed to get mutex to push message");
+    }
+}
+int have_external_message() {
+    return list_top(&external_messages, struct ExternalMessageItem, list) != 0;
+}
+void process_next_external_message() {
+    if (!have_external_message()) return;
+    BaseType_t res = xSemaphoreTakeRecursive(message_mutex,10);
+    if (res == pdPASS) {
+        //ESP_LOGI(TAG, "process_next_external_message got message_mutex");
+        struct ExternalMessageItem *ml = list_pop(&external_messages, struct ExternalMessageItem, list);
+        res = xSemaphoreGiveRecursive(message_mutex);
+        assert(res == pdPASS);
+        //ESP_LOGI(TAG, "process_next_external_message released message_mutex");
+        if (!ml) return;
+        struct cw_MQTTSUBSCRIBER *sub = ml->s;
+        int message = ml->message;
+        free(ml);
+        BaseType_t res = xSemaphoreTakeRecursive(runtime_mutex,10);
+        if (res == pdPASS) {
+
+            sub->machine.set_value(sub, "message", &sub->message, message);
+            NotifyDependents(&sub->machine);
+            markPending(&sub->machine);
+            res = xSemaphoreGiveRecursive(runtime_mutex);
+            assert(res == pdPASS);
+        }
+    }
+    else {
+        //ESP_LOGI(TAG, "failed to get mutex to process next message");
+    }
+}
+
+void receiveMQTT(struct cw_MQTTBROKER *context, const char *topic, size_t topic_len, const char *data, size_t data_len) {
+    if (!context) return;
+    //ESP_LOGI(TAG, "MQTT_EVENT_DATA TOPIC=%.*s DATA=%.*s", topic_len, topic, data_len, data);
+    if (strncmp(topic, "/command", topic_len) == 0) {
+        char *cmd = malloc(data_len+1);
+        memcpy(cmd, data, data_len);
+        cmd[data_len] = 0;
+        push_command(cmd);
+    }
+    else {
+        char buf[data_len+1];
+        memcpy(buf, data, data_len);
+        buf[data_len] = 0;
+        char *p;
+        long message = strtol(buf, &p, 10);
+        struct SubscriberListItem *item, *next;
+        list_for_each_safe(&context->subscribers, item, next, list) {
+            if (item->s && strncmp(item->s->topic, topic, topic_len) == 0) {
+                push_message(item->s, message);
+                break;
+            }
+        }
+    }
+}
+
 void publish_MQTT(struct cw_MQTTBROKER *broker, MachineBase *m, int state) {
-    esp_mqtt_client_handle_t client = (broker) ? broker->client : system_client;
-    if (!haveMQTT()) return;
-    char buf[40];
-    char data[40];
-    snprintf(buf, 40, "/sampler/%s", m->name);
-    snprintf(data, 40, "%lld %s %s", upTime(), m->name, name_from_id(state));
-    esp_mqtt_client_publish(client, buf, data, 0, 0, 0);
+    BaseType_t res = xSemaphoreTakeRecursive(message_mutex,10);
+    if (res == pdPASS) {
+        //ESP_LOGI(TAG, "publish_MQTT got message_mutex");
+        esp_mqtt_client_handle_t client = (broker) ? broker->client : system_client;
+        if (haveMQTT()) {
+            char buf[40];
+            char data[40];
+            snprintf(buf, 40, "/sampler/%s", m->name);
+            snprintf(data, 40, "%lld %s %s", upTime(), m->name, name_from_id(state));
+            esp_mqtt_client_publish(client, buf, data, 0, 0, 0);
+        }
+        res = xSemaphoreGiveRecursive(message_mutex);
+        assert(res == pdPASS);
+        //ESP_LOGI(TAG, "publish_MQTT released message_mutex");
+    }
+    else {
+        //ESP_LOGI(TAG, "publish_MQTT failed to get message mutex");
+    }
 }
 
 void publish_MQTT_property(struct cw_MQTTBROKER *broker, MachineBase *m, const char *name, int value) {
-    //ESP_LOGI(TAG,"%lld publish_MQTT_property", upTime());
-    esp_mqtt_client_handle_t client = (broker) ? broker->client : system_client;
-    if (!haveMQTT()) return;
-    char buf[60];
-    char data[40];
-    snprintf(buf, 60, "/sampler/%s/%s", m->name, name);
-    snprintf(data, 40, "%lld %s %s %d", upTime(), m->name, name, value);
-    //ESP_LOGI(TAG,"%lld publishing %s/%s", upTime(),buf, data);
-    esp_mqtt_client_publish(client, buf, data, 0, 0, 0);
+   BaseType_t res = xSemaphoreTakeRecursive(message_mutex,10);
+    if (res == pdPASS) {
+        //ESP_LOGI(TAG, "publish_MQTT_property got message_mutex");
+        //ESP_LOGI(TAG,"%lld publish_MQTT_property", upTime());
+        esp_mqtt_client_handle_t client = (broker) ? broker->client : system_client;
+        if (!haveMQTT()) goto done_publish_property;
+        char buf[60];
+        char data[40];
+        snprintf(buf, 60, "/sampler/%s/%s", m->name, name);
+        snprintf(data, 40, "%lld %s %s %d", upTime(), m->name, name, value);
+        //ESP_LOGI(TAG,"%lld publishing %s/%s", upTime(),buf, data);
+        esp_mqtt_client_publish(client, buf, data, 0, 0, 0);
+    done_publish_property:
+        res = xSemaphoreGiveRecursive(message_mutex);
+        assert(res == pdPASS);
+        //ESP_LOGI(TAG, "publish_MQTT_property released message_mutex");
+    }
+    else {
+        //ESP_LOGI(TAG, "publish_MQTT_property failed to get message mutex");
+    }
 }
 
 void sendMQTT(struct cw_MQTTBROKER *broker, const char *topic, const char *data) {
-    esp_mqtt_client_handle_t client = (broker) ? broker->client : system_client;
-    if (!haveMQTT()) return;
-    esp_mqtt_client_publish(client, topic, data, 0, 0, 0);
+   BaseType_t res = xSemaphoreTakeRecursive(message_mutex,10);
+    if (res == pdPASS) {
+        //ESP_LOGI(TAG, "sendMQTT got message_mutex");
+        esp_mqtt_client_handle_t client = (broker) ? broker->client : system_client;
+        if (haveMQTT())
+            esp_mqtt_client_publish(client, topic, data, 0, 0, 0);
+
+        res = xSemaphoreGiveRecursive(message_mutex);
+        assert(res == pdPASS);
+        //ESP_LOGI(TAG, "sendMQTT released message_mutex");
+    }
+    else {
+        //ESP_LOGI(TAG, "sendMQTT failed to get message mutex");
+    }
 }
 
 void rt_init(void) {
@@ -129,8 +243,10 @@ void rt_init(void) {
     assert(io_interface_sem);
     runtime_mutex = xSemaphoreCreateRecursiveMutex();
     assert(runtime_mutex);
+    message_mutex = xSemaphoreCreateRecursiveMutex();
     list_head_init(&global_messages);
     list_head_init(&command_messages);
+    list_head_init(&external_messages);
 
     const esp_mqtt_client_config_t mqtt_cfg = {
         .uri = CONFIG_ESP_MQTT_BROKER,
@@ -197,15 +313,23 @@ void markPending(MachineBase *m) {
     assert(runtime_mutex);
     BaseType_t res = xSemaphoreTakeRecursive(runtime_mutex,10);
     assert(res == pdPASS);
-    cwTask *t = (cwTask *)malloc(sizeof(cwTask));;
+	cwTask *t = pending_tasks;
+	while (t) {
+		if (t->machine == m) goto done_markPending;
+		t = t->next;
+	}
+    t = (cwTask *)malloc(sizeof(cwTask));;
     t->machine = m; t->f = 0;
 	t->next = pending_tasks;
 	pending_tasks = t;
+done_markPending:
     res = xSemaphoreGiveRecursive(runtime_mutex);
     assert(res == pdPASS);
 }
 
 void activatePending() {
+    assert(runtime_mutex);
+    BaseType_t res = xSemaphoreTakeRecursive(runtime_mutex,10);
     while (pending_tasks) {
         //ESP_LOGI(TAG,"%lld marking pending machine [%d] as runnable", upTime(), pending_tasks->machine->id);
         markRunnable(pending_tasks->machine);
@@ -213,6 +337,8 @@ void activatePending() {
         pending_tasks = pending_tasks->next;
         free(t);
     }
+    res = xSemaphoreGiveRecursive(runtime_mutex);
+    assert(res == pdPASS);
 }
 
 cwTask *clearTaskList(cwTask *l) {

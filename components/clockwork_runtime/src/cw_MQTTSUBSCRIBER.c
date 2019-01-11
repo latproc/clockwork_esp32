@@ -5,11 +5,6 @@
 #define DEBUG_LOG 0
 static const char* TAG = "MQTTSUBSCRIBER";
 
-struct SubscriberListItem {
-	struct list_node list;
-	struct cw_MQTTSUBSCRIBER *subs;
-};
-
 #define state_cw_INIT 1
 struct cw_MQTTSUBSCRIBER_Vars {
 	struct cw_MQTTSUBSCRIBER *m;
@@ -38,6 +33,7 @@ static void backup_Vars(struct cw_MQTTSUBSCRIBER *m) {
 	b->l_INIT = v->l_INIT;
 	b->l_broker = *v->l_broker;
 	b->l_topic = v->l_topic;
+	b->l_message = *v->l_message;
 }
 int *cw_MQTTSUBSCRIBER_lookup(struct cw_MQTTSUBSCRIBER *m, int symbol) {
   if (symbol == sym_VALUE) return &m->VALUE;

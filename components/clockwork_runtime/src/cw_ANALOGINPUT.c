@@ -20,6 +20,9 @@ struct cw_ANALOGINPUT *create_cw_ANALOGINPUT(const char *name, int pin, MachineB
   Init_cw_ANALOGINPUT(p, name, pin, module, offset, channel, filter_settings);
   return p;
 }
+void cw_ANALOGINPUT_set_value (struct cw_ANALOGINPUT *input, const char *name, uint16_t value) {
+    publish_MQTT_property(0, &input->machine, name, value);
+}
 void Init_cw_ANALOGINPUT(struct cw_ANALOGINPUT *m, const char *name, int pin, MachineBase *module, int offset, int channel, MachineBase *filter_settings)
 {
   initMachineBase(&m->machine, name);
@@ -31,6 +34,7 @@ void Init_cw_ANALOGINPUT(struct cw_ANALOGINPUT *m, const char *name, int pin, Ma
   m->_filter_settings = filter_settings;
   m->machine.lookup = (lookup_func)cw_ANALOGINPUT_lookup;
   m->machine.lookup_machine = (lookup_machine_func)cw_ANALOGINPUT_lookup_machine;
+  m->machine.set_value = cw_ANALOGINPUT_set_value;
   m->machine.state = 0;
   m->machine.check_state = ( int(*)(MachineBase*) )cw_ANALOGINPUT_check_state;
   m->machine.describe = cw_ANALOGINPUT_describe;

@@ -79,6 +79,10 @@ void publish_MQTT(struct cw_MQTTBROKER *broker, MachineBase *m, int state);
 void publish_MQTT_property(struct cw_MQTTBROKER *broker, MachineBase *m, const char *name, int value);
 void sendMQTT(struct cw_MQTTBROKER *broker, const char *topic, const char *data);
 
+void receiveMQTT(struct cw_MQTTBROKER *context, const char *topic, size_t topic_len, const char *data, size_t len);
+int have_external_message();
+void process_next_external_message();
+
 struct MachineListItem {
     struct list_node list;
 	struct MachineBase *machine;

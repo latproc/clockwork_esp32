@@ -16,6 +16,12 @@ struct cw_MQTTSUBSCRIBER {
 	struct cw_MQTTSUBSCRIBER_Vars *vars;
 	struct cw_MQTTSUBSCRIBER_Vars_backup *backup;
 };
+
+struct SubscriberListItem {
+    struct list_node list;
+	struct cw_MQTTSUBSCRIBER *s;
+};
+
 struct IOAddress *cw_MQTTSUBSCRIBER_getAddress(struct cw_MQTTSUBSCRIBER *p);
 struct cw_MQTTSUBSCRIBER *create_cw_MQTTSUBSCRIBER(const char *name, MachineBase *broker, const char *topic);
 void Init_cw_MQTTSUBSCRIBER(struct cw_MQTTSUBSCRIBER * , const char *name, MachineBase *broker, const char *topic);

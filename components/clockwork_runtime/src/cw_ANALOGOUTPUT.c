@@ -90,7 +90,7 @@ int cw_ANALOGOUTPUT_check_state(struct cw_ANALOGOUTPUT *m)
 void cw_ANALOGOUTPUT_set_value (struct cw_ANALOGOUTPUT *output, const char *name, uint16_t value) {
     rt_set_io_uint16(&output->addr, value);
     output->addr.status = IO_PENDING;
-    publish_MQTT_property(0, output, name, value);
+    publish_MQTT_property(0, &output->machine, name, value);
 }
 int cw_ANALOGOUTPUT_get_channel(struct cw_ANALOGOUTPUT *output) {
   return output->channel;

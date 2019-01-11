@@ -172,6 +172,7 @@
 #define cw_OLIMEX_GATEWAY32_GPIO16                    16
 #define cw_OLIMEX_GATEWAY32_GPIO17                    17
 #define cw_OLIMEX_GATEWAY32_GPIO32                    32
+#define cw_OLIMEX_GATEWAY32_GPIO5                     5
 #define cw_OLIMEX_GATEWAY32_LED                       33
 #define cw_LOLIBOT_IO0                       0
 #define cw_LOLIBOT_IO13                      13
