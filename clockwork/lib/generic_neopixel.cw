@@ -1,0 +1,2 @@
+NEOPIXELBUS MACHINE pin { idle INIT; }
+NEOPIXEL MACHINE Bus { idle INIT; }
