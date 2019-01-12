@@ -56,6 +56,7 @@ int PointOutput_check_state(struct PointOutput *m) {
 
 void Init_PointOutput(struct PointOutput *m, const char *name, int gpio) {
 	initMachineBase(&m->machine, name);
+    m->machine.class_name = "OUTPUT";
     init_io_address(&m->addr, 0, 0, 0, 1, iot_digout, IO_STABLE);
 	m->machine.flags &= MASK_PASSIVE; /* not a passive machine */
     m->machine.state = state_PointOutput_off;

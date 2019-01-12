@@ -56,6 +56,7 @@ typedef struct MachineBase {
 	struct list_head actions;
 	struct list_head messages;
     const char *name;
+	const char *class_name;
     unsigned int id;
 	unsigned char flags;
 	unsigned long START, TIMER;
@@ -117,6 +118,8 @@ int is_asleep(MachineBase *m);
 int stateCheckMachines(); // are there machines that need state rules evaluated?
 void markStateCheck(MachineBase *m);
 MachineBase *nextStateCheck();
+
+const char *name_from_id(); // provided within user auto-generated code
 
 void push_command(char *cmd);
 int have_command();

@@ -130,44 +130,44 @@ struct cw_Ramp *create_cw_Ramp(const char *name, MachineBase *clock, MachineBase
 	return p;
 }
 int cw_Ramp_INIT_enter(struct cw_Ramp *m, ccrContParam) {
-	struct cw_Ramp_Vars *v;
-	v = m->vars;
-	v->l_m_output_VALUE->set_value(v->l_m_output_VALUE,"VALUE" ,v->l_output_VALUE,*v->l_start);
-	m->machine.set_value(&m->machine, "direction", v->l_direction,1);
+	struct cw_Ramp_Vars_backup *v;
+	v = m->backup;
+	m->vars->l_m_output_VALUE->set_value(m->vars->l_m_output_VALUE,"VALUE" ,m->vars->l_output_VALUE,v->l_start);
+	m->machine.set_value(&m->machine, "direction", m->vars->l_direction,1);
 	cw_send(m->_forward, &m->machine, cw_message_turnOn);
 	m->machine.execute = 0;
 	return 1;
 }
 int cw_Ramp_bottom_forward_enter(struct cw_Ramp *m, ccrContParam) {
-	struct cw_Ramp_Vars *v;
-	v = m->vars;
-	v->l_m_output_VALUE->set_value(v->l_m_output_VALUE,"VALUE" ,v->l_output_VALUE,*v->l_min);
-	m->machine.set_value(&m->machine, "direction", v->l_direction,1);
+	struct cw_Ramp_Vars_backup *v;
+	v = m->backup;
+	m->vars->l_m_output_VALUE->set_value(m->vars->l_m_output_VALUE,"VALUE" ,m->vars->l_output_VALUE,v->l_min);
+	m->machine.set_value(&m->machine, "direction", m->vars->l_direction,1);
 	cw_send(m->_forward, &m->machine, cw_message_turnOff);
 	m->machine.execute = 0;
 	return 1;
 }
 int cw_Ramp_bottom_reverse_enter(struct cw_Ramp *m, ccrContParam) {
-	struct cw_Ramp_Vars *v;
-	v = m->vars;
-	v->l_m_output_VALUE->set_value(v->l_m_output_VALUE,"VALUE" ,v->l_output_VALUE,*v->l_min);
-	m->machine.set_value(&m->machine, "direction", v->l_direction,1);
+	struct cw_Ramp_Vars_backup *v;
+	v = m->backup;
+	m->vars->l_m_output_VALUE->set_value(m->vars->l_m_output_VALUE,"VALUE" ,m->vars->l_output_VALUE,v->l_min);
+	m->machine.set_value(&m->machine, "direction", m->vars->l_direction,1);
 	cw_send(m->_forward, &m->machine, cw_message_turnOn);
 	m->machine.execute = 0;
 	return 1;
 }
 int cw_Ramp_clock_on_enter(struct cw_Ramp *m, ccrContParam) {
-	struct cw_Ramp_Vars *v;
-	v = m->vars;
-	v->l_m_output_VALUE->set_value(v->l_m_output_VALUE,"VALUE" ,v->l_output_VALUE,(*v->l_output_VALUE + (*v->l_direction * *v->l_step)));
+	struct cw_Ramp_Vars_backup *v;
+	v = m->backup;
+	m->vars->l_m_output_VALUE->set_value(m->vars->l_m_output_VALUE,"VALUE" ,m->vars->l_output_VALUE,(v->l_output_VALUE + (v->l_direction * v->l_step)));
 	m->machine.execute = 0;
 	return 1;
 }
 int cw_Ramp_top_enter(struct cw_Ramp *m, ccrContParam) {
-	struct cw_Ramp_Vars *v;
-	v = m->vars;
-	v->l_m_output_VALUE->set_value(v->l_m_output_VALUE,"VALUE" ,v->l_output_VALUE,*v->l_end);
-	m->machine.set_value(&m->machine, "direction", v->l_direction,-1);
+	struct cw_Ramp_Vars_backup *v;
+	v = m->backup;
+	m->vars->l_m_output_VALUE->set_value(m->vars->l_m_output_VALUE,"VALUE" ,m->vars->l_output_VALUE,v->l_end);
+	m->machine.set_value(&m->machine, "direction", m->vars->l_direction,-1);
 	m->machine.execute = 0;
 	return 1;
 }
@@ -180,6 +180,7 @@ int cw_Ramp_handle_message(struct MachineBase *obj, struct MachineBase *source, 
 }
 void Init_cw_Ramp(struct cw_Ramp *m, const char *name, MachineBase *clock, MachineBase *output, MachineBase *forward) {
 	initMachineBase(&m->machine, name);
+	m->machine.class_name = "Ramp";
 	init_io_address(&m->addr, 0, 0, 0, 0, iot_none, IO_STABLE);
 	m->_clock = clock;
 	if (clock) MachineDependencies_add(clock, cw_Ramp_To_MachineBase(m));
@@ -210,30 +211,30 @@ struct IOAddress *cw_Ramp_getAddress(struct cw_Ramp *p) {
 MachineBase *cw_Ramp_To_MachineBase(struct cw_Ramp *p) { return &p->machine; }
 
 int cw_Ramp_check_state(struct cw_Ramp *m) {
-	struct cw_Ramp_Vars *v = m->vars;
+	struct cw_Ramp_Vars_backup *v = m->backup;
 	int res = 0;
 	int new_state = 0; enter_func new_state_enter = 0;
 	backup_Vars(m);
-	if (((*v->l_output_VALUE >= *v->l_end) && (*v->l_direction > 0))) /* top */ {
+	if (((v->l_output_VALUE >= v->l_end) && (v->l_direction > 0))) /* top */ {
 		new_state = state_cw_top;
 		new_state_enter = (enter_func)cw_Ramp_top_enter;
 	}
 	else
-	if ((((*v->l_output_VALUE <= *v->l_min) && (*v->l_direction < 0)) && (*v->l_forward == v->l_off))) /* bottom_reverse */ {
+	if ((((v->l_output_VALUE <= v->l_min) && (v->l_direction < 0)) && (v->l_forward == v->l_off))) /* bottom_reverse */ {
 		new_state = state_cw_bottom_reverse;
 		new_state_enter = (enter_func)cw_Ramp_bottom_reverse_enter;
 	}
 	else
-	if ((((*v->l_output_VALUE <= *v->l_min) && (*v->l_direction < 0)) && (*v->l_forward == v->l_on))) /* bottom_forward */ {
+	if ((((v->l_output_VALUE <= v->l_min) && (v->l_direction < 0)) && (v->l_forward == v->l_on))) /* bottom_forward */ {
 		new_state = state_cw_bottom_forward;
 		new_state_enter = (enter_func)cw_Ramp_bottom_forward_enter;
 	}
 	else
-	if (((*v->l_output_VALUE < *v->l_end) && (*v->l_direction > 0))) /* rising */ {
+	if (((v->l_output_VALUE < v->l_end) && (v->l_direction > 0))) /* rising */ {
 		new_state = state_cw_rising;
 	}
 	else
-	if (((*v->l_output_VALUE > *v->l_min) && (*v->l_direction < 0))) /* falling */ {
+	if (((v->l_output_VALUE > v->l_min) && (v->l_direction < 0))) /* falling */ {
 		new_state = state_cw_falling;
 	}
 	else

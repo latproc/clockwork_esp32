@@ -74,22 +74,22 @@ MachineBase *cw_DebouncedInput_lookup_machine(struct cw_DebouncedInput *m, int s
 void cw_DebouncedInput_describe(struct cw_DebouncedInput *m);
 int cw_DebouncedInput_handle_message(struct MachineBase *ramp, struct MachineBase *machine, int state);
 int cw_DebouncedInput_check_state(struct cw_DebouncedInput *m);
-uint64_t cw_DebouncedInput_next_trigger_time(struct cw_DebouncedInput *m, struct cw_DebouncedInput_Vars *v);
+uint64_t cw_DebouncedInput_next_trigger_time(struct cw_DebouncedInput *m, struct cw_DebouncedInput_Vars_backup *v);
 struct cw_DebouncedInput *create_cw_DebouncedInput(const char *name, MachineBase *in) {
 	struct cw_DebouncedInput *p = (struct cw_DebouncedInput *)malloc(sizeof(struct cw_DebouncedInput));
 	Init_cw_DebouncedInput(p, name, in);
 	return p;
 }
 int cw_DebouncedInput_off_enter(struct cw_DebouncedInput *m, ccrContParam) {
-	struct cw_DebouncedInput_Vars *v;
-	v = m->vars;
+	struct cw_DebouncedInput_Vars_backup *v;
+	v = m->backup;
 	ESP_LOGI(TAG, "%lld %s", upTime(), "Debounce input off");
 	m->machine.execute = 0;
 	return 1;
 }
 int cw_DebouncedInput_on_enter(struct cw_DebouncedInput *m, ccrContParam) {
-	struct cw_DebouncedInput_Vars *v;
-	v = m->vars;
+	struct cw_DebouncedInput_Vars_backup *v;
+	v = m->backup;
 	ESP_LOGI(TAG, "%lld %s", upTime(), "Debounced input on");
 	m->machine.execute = 0;
 	return 1;
@@ -103,19 +103,20 @@ int cw_DebouncedInput_handle_message(struct MachineBase *obj, struct MachineBase
 	markPending(obj);
 	return 1;
 }
-uint64_t cw_DebouncedInput_next_trigger_time(struct cw_DebouncedInput *m, struct cw_DebouncedInput_Vars *v) {
+uint64_t cw_DebouncedInput_next_trigger_time(struct cw_DebouncedInput *m, struct cw_DebouncedInput_Vars_backup *v) {
 	int64_t res = 1000000000;
 	int64_t val = 0;
 	//TODO: remove possible duplicates here
-	val = *v->l_debounce_time - *v->l_in_TIMER;
+	val = v->l_debounce_time - v->l_in_TIMER;
 	if (val>0 && val < res) res = val;
-	val = *v->l_off_time - *v->l_TIMER;
+	val = v->l_off_time - v->l_TIMER;
 	if (val>0 && val < res) res = val;
 	if (res == 1000000000) res = 0;
 	return res;
 }
 void Init_cw_DebouncedInput(struct cw_DebouncedInput *m, const char *name, MachineBase *in) {
 	initMachineBase(&m->machine, name);
+	m->machine.class_name = "DebouncedInput";
 	init_io_address(&m->addr, 0, 0, 0, 0, iot_none, IO_STABLE);
 	m->_in = in;
 	if (in) MachineDependencies_add(in, cw_DebouncedInput_To_MachineBase(m));
@@ -139,11 +140,11 @@ struct IOAddress *cw_DebouncedInput_getAddress(struct cw_DebouncedInput *p) {
 MachineBase *cw_DebouncedInput_To_MachineBase(struct cw_DebouncedInput *p) { return &p->machine; }
 
 int cw_DebouncedInput_check_state(struct cw_DebouncedInput *m) {
-	struct cw_DebouncedInput_Vars *v = m->vars;
+	struct cw_DebouncedInput_Vars_backup *v = m->backup;
 	int res = 0;
 	int new_state = 0; enter_func new_state_enter = 0;
 	backup_Vars(m);
-	if ((((*v->l_in == v->l_off) && (*v->l_in_TIMER >= *v->l_debounce_time)) || ((*v->l_SELF == v->l_off) && (m->machine.TIMER < *v->l_off_time)))) /* off */ {
+	if ((((v->l_in == v->l_off) && (v->l_in_TIMER >= v->l_debounce_time)) || ((v->l_SELF == v->l_off) && (m->machine.TIMER < v->l_off_time)))) /* off */ {
 		new_state = state_cw_off;
 		new_state_enter = (enter_func)cw_DebouncedInput_off_enter;
 	}

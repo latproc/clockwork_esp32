@@ -1,0 +1,59 @@
+#!/bin/sh
+#
+if [ "$1" = "--wiz" ]; then
+ cat <<EOW
+-p project  Clockwork project directory
+-f ?  Flash the project to the device
+EOW
+ exit
+ fi
+
+project=
+option_f=
+[ -r defaults.sh ] && . defaults.sh
+args=`getopt p:f -- "$@"`
+if [ $? != 0 ]; then 
+ echo "Valid options: "
+  $0 --wiz 
+ exit 2 
+ fi
+
+#set -- $args
+ for i
+ do
+  case "$i"
+   in
+-p) #  Clockwork project directory
+     project="$2"; shift;  shift;
+   ;;
+-f) #  Flash the project to the device
+     option_f=1; shift
+    ;;
+  --)
+    shift; break
+   esac
+done
+#
+#
+# insert your code here
+#echo project=$project
+#echo option_f=$option_f
+
+if [ "$project" == "" ]; then
+  echo "usage: $0 -p clockwork-project-dir"
+  exit 1
+fi
+
+echo $0
+BINDIR="`dirname $0`"
+rm -rf /tmp/cw_export
+cw --export_c "$project"
+echo
+echo "changes " `"$BINDIR"/changed_files`
+$BINDIR/update_cw
+if [ "$option_f" == "" ]; then
+  make
+else
+  make flash
+fi
+

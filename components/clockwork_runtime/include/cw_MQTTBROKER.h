@@ -5,6 +5,8 @@
 #include "rtio.h"
 #include "mqtt_client.h"
 
+void cwMQTTTask(void *pvParameter);
+
 #define Value int
 struct cw_MQTTBROKER_Vars;
 struct cw_MQTTBROKER_Vars_backup;
@@ -22,4 +24,8 @@ struct cw_MQTTBROKER *create_cw_MQTTBROKER(const char *name, const char *host, u
 void Init_cw_MQTTBROKER(struct cw_MQTTBROKER * , const char *name, const char *host, unsigned int port);
 MachineBase *cw_MQTTBROKER_To_MachineBase(struct cw_MQTTBROKER *);
 void register_subscriber(struct cw_MQTTSUBSCRIBER *);
+
+extern esp_mqtt_client_handle_t system_client;
+void push_mqtt_message(struct cw_MQTTBROKER *broker, const char *topic, const char *msg);
+
 #endif

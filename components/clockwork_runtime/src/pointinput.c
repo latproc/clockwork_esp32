@@ -45,6 +45,7 @@ int PointInput_check_state(struct PointInput *m) {
 
 void Init_PointInput(struct PointInput *m, const char *name, int gpio) {
 	initMachineBase(&m->machine, name);
+    m->machine.class_name = "INPUT";
     init_io_address(&m->addr, 0, 0, 0, 1, iot_digin, IO_STABLE);
 	m->machine.flags &= MASK_PASSIVE; /* not a passive machine */
     m->machine.state = state_PointInput_off;

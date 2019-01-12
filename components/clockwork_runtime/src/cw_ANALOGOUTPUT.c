@@ -29,6 +29,7 @@ static void set_value(struct cw_ANALOGOUTPUT *m, const char *name, int *p, int v
 void Init_cw_ANALOGOUTPUT(struct cw_ANALOGOUTPUT *m, const char *name, int pin, MachineBase *module, int offset, int channel)
 {
   initMachineBase(&m->machine, name);
+  m->machine.class_name = "ANALOGOUTPUT";
   init_io_address(&m->addr, 0, 0, 0, 16, iot_pwm, IO_STABLE);
   m->_module = module;
   m->_offset = offset;

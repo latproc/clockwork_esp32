@@ -67,6 +67,7 @@ void cw_MQTTSUBSCRIBER_set_value (struct cw_MQTTSUBSCRIBER *m, const char *name,
 }
 void Init_cw_MQTTSUBSCRIBER(struct cw_MQTTSUBSCRIBER *m, const char *name, MachineBase *broker, const char *topic) {
 	initMachineBase(&m->machine, name);
+    m->machine.class_name = "MQTTSUBSCRIBER";
 	init_io_address(&m->addr, 0, 0, 0, 0, iot_none, IO_STABLE);
 	m->_broker = broker;
 	if (broker) MachineDependencies_add(broker, cw_MQTTSUBSCRIBER_To_MachineBase(m));

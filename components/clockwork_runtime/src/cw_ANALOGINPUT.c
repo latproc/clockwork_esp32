@@ -26,6 +26,7 @@ void cw_ANALOGINPUT_set_value (struct cw_ANALOGINPUT *input, const char *name, u
 void Init_cw_ANALOGINPUT(struct cw_ANALOGINPUT *m, const char *name, int pin, MachineBase *module, int offset, int channel, MachineBase *filter_settings)
 {
   initMachineBase(&m->machine, name);
+  m->machine.class_name = "ANALOGINPUT";
   init_io_address(&m->addr, 0, 0, 0,  16, iot_none, IO_STABLE);
   m->gpio_pin = pin;
   m->_module = module;

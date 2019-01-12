@@ -47,7 +47,11 @@ void cwrt_task(void *pvParameter)
     unsigned long last = 0;
     while(1) {
 		cwrt_process(&last);
-        vTaskDelay(1);
+        unsigned long now = upTime();
+        if (now < last || now - last > 50) {
+            vTaskDelay(1);
+            last = now;
+        }
     }
 }
 
@@ -98,9 +102,9 @@ void app_main()
     ESP_LOGI(TAG, "Waiting for wifi");
     xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT, false, true, portMAX_DELAY);
     
-	xTaskCreate(&RTSchedulerTask, "sch_task", 10000, NULL, 5, NULL);
-	xTaskCreate(&RTIOInterface, "i/o_task", 10000, NULL, 5, NULL);
-    xTaskCreate(&cwrt_task, "cwrt_task", 10000, NULL, 5, NULL);
+	xTaskCreate(&RTSchedulerTask, "sch_task", 10000, NULL, 3, NULL);
+	xTaskCreate(&RTIOInterface, "i/o_task", 10000, NULL, 3, NULL);
+    xTaskCreate(&cwrt_task, "cwrt_task", 10000, NULL, 3, NULL);
 
     // TODO: is it ok for app_main to exit?
     while (true) {

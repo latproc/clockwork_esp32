@@ -56,16 +56,16 @@ MachineBase *cw_Pulse_lookup_machine(struct cw_Pulse *m, int symbol) {
 void cw_Pulse_describe(struct cw_Pulse *m);
 int cw_Pulse_handle_message(struct MachineBase *ramp, struct MachineBase *machine, int state);
 int cw_Pulse_check_state(struct cw_Pulse *m);
-uint64_t cw_Pulse_next_trigger_time(struct cw_Pulse *m, struct cw_Pulse_Vars *v);
+uint64_t cw_Pulse_next_trigger_time(struct cw_Pulse *m, struct cw_Pulse_Vars_backup *v);
 struct cw_Pulse *create_cw_Pulse(const char *name) {
 	struct cw_Pulse *p = (struct cw_Pulse *)malloc(sizeof(struct cw_Pulse));
 	Init_cw_Pulse(p, name);
 	return p;
 }
 int cw_Pulse_toggle_speed(struct cw_Pulse *m, ccrContParam) {
-	struct cw_Pulse_Vars *v;
-	v = m->vars;
-	m->machine.set_value(&m->machine, "delay", v->l_delay,(1100 - *v->l_delay));
+	struct cw_Pulse_Vars_backup *v;
+	v = m->backup;
+	m->machine.set_value(&m->machine, "delay", m->vars->l_delay,(1100 - v->l_delay));
 	m->machine.execute = 0;
 	return 1;
 }
@@ -80,17 +80,18 @@ int cw_Pulse_handle_message(struct MachineBase *obj, struct MachineBase *source,
 	markPending(obj);
 	return 1;
 }
-uint64_t cw_Pulse_next_trigger_time(struct cw_Pulse *m, struct cw_Pulse_Vars *v) {
+uint64_t cw_Pulse_next_trigger_time(struct cw_Pulse *m, struct cw_Pulse_Vars_backup *v) {
 	int64_t res = 1000000000;
 	int64_t val = 0;
 	//TODO: remove possible duplicates here
-	val = *v->l_delay - *v->l_TIMER;
+	val = v->l_delay - v->l_TIMER;
 	if (val>0 && val < res) res = val;
 	if (res == 1000000000) res = 0;
 	return res;
 }
 void Init_cw_Pulse(struct cw_Pulse *m, const char *name) {
 	initMachineBase(&m->machine, name);
+	m->machine.class_name = "Pulse";
 	init_io_address(&m->addr, 0, 0, 0, 0, iot_none, IO_STABLE);
 	m->delay = 100;
 	m->machine.state = state_cw_INIT;
@@ -111,11 +112,11 @@ struct IOAddress *cw_Pulse_getAddress(struct cw_Pulse *p) {
 MachineBase *cw_Pulse_To_MachineBase(struct cw_Pulse *p) { return &p->machine; }
 
 int cw_Pulse_check_state(struct cw_Pulse *m) {
-	struct cw_Pulse_Vars *v = m->vars;
+	struct cw_Pulse_Vars_backup *v = m->backup;
 	int res = 0;
 	int new_state = 0; enter_func new_state_enter = 0;
 	backup_Vars(m);
-	if (((*v->l_SELF == v->l_off) && (m->machine.TIMER >= *v->l_delay))) /* on */ {
+	if (((v->l_SELF == v->l_off) && (m->machine.TIMER >= v->l_delay))) /* on */ {
 		new_state = state_cw_on;
 	}
 	else

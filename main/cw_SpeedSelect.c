@@ -70,8 +70,8 @@ struct cw_SpeedSelect *create_cw_SpeedSelect(const char *name, MachineBase *butt
 	return p;
 }
 int cw_SpeedSelect_button_off_enter(struct cw_SpeedSelect *m, ccrContParam) {
-	struct cw_SpeedSelect_Vars *v;
-	v = m->vars;
+	struct cw_SpeedSelect_Vars_backup *v;
+	v = m->backup;
 	cw_send(m->_pulser, &m->machine, cw_message_toggle_speed);
 	m->machine.execute = 0;
 	return 1;
@@ -89,6 +89,7 @@ int cw_SpeedSelect_handle_message(struct MachineBase *obj, struct MachineBase *s
 }
 void Init_cw_SpeedSelect(struct cw_SpeedSelect *m, const char *name, MachineBase *button, MachineBase *pulser) {
 	initMachineBase(&m->machine, name);
+	m->machine.class_name = "SpeedSelect";
 	init_io_address(&m->addr, 0, 0, 0, 0, iot_none, IO_STABLE);
 	m->_button = button;
 	if (button) MachineDependencies_add(button, cw_SpeedSelect_To_MachineBase(m));
@@ -112,11 +113,11 @@ struct IOAddress *cw_SpeedSelect_getAddress(struct cw_SpeedSelect *p) {
 MachineBase *cw_SpeedSelect_To_MachineBase(struct cw_SpeedSelect *p) { return &p->machine; }
 
 int cw_SpeedSelect_check_state(struct cw_SpeedSelect *m) {
-	struct cw_SpeedSelect_Vars *v = m->vars;
+	struct cw_SpeedSelect_Vars_backup *v = m->backup;
 	int res = 0;
 	int new_state = 0; enter_func new_state_enter = 0;
 	backup_Vars(m);
-	if ((*v->l_pulser_delay < 200)) /* fast */ {
+	if ((v->l_pulser_delay < 200)) /* fast */ {
 		new_state = state_cw_fast;
 	}
 	else

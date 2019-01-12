@@ -71,6 +71,7 @@ int cw_SYSTEMSETTINGS_handle_message(struct MachineBase *obj, struct MachineBase
 }
 void Init_cw_SYSTEMSETTINGS(struct cw_SYSTEMSETTINGS *m, const char *name) {
 	initMachineBase(&m->machine, name);
+    m->machine.class_name = "SYSTEMSETTINGS";
 	m->CYCLE_DELAY = 2000;
 	m->HOST = "";
 	m->INFO = esp_get_idf_version();

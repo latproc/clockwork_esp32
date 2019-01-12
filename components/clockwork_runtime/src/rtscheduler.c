@@ -41,7 +41,7 @@ void pushRunnable(MachineBase *m) {
 
 struct RTScheduler *RTScheduler_get() {
     assert(scheduler);
-    BaseType_t res = xSemaphoreTake(scheduler->scheduler_mutex, 1);
+    BaseType_t res = xSemaphoreTake(scheduler->scheduler_mutex, 5);
     if (res == pdPASS)
         return scheduler;
     else {
@@ -52,7 +52,7 @@ struct RTScheduler *RTScheduler_get() {
 void RTScheduler_release() {
     assert(scheduler);
     BaseType_t res = xSemaphoreGive(scheduler->scheduler_mutex);
-    if (res == pdFALSE) {
+    if (res == pdFAIL) {
         ESP_LOGI(TAG,"RTScheduler_release failed to give");
     }
 }
@@ -121,32 +121,16 @@ void RTSchedulerTask(void *pvParameter) {
     scheduler = RTScheduler_create();
     unsigned long now;
 
-    //min_time = LONG_MAX;
 	scheduler->processing = 0;
     while (!scheduler_sem || !process_sem) vTaskDelay(5);
 
 	while (1) {
-        if (scheduler->processing) {
-            // tell main we are done
-            while (xSemaphoreGive(process_sem) == pdFALSE) {
-                ESP_LOGI(TAG,"scheduler failed to give to main");
-                taskYIELD();
-            }
-            scheduler->processing = 0;
-        }
-
-        // wait for permission to run
-        BaseType_t res = xSemaphoreTake( scheduler_sem, 10 );
-        if (res != pdPASS) {
-            taskYIELD();
-            continue;
-        }
-    	scheduler->processing = 1;
         now = upTime();
-        if (xSemaphoreTake(scheduler->scheduler_mutex, 1) == pdFALSE) {
+        if (xSemaphoreTake(scheduler->scheduler_mutex, 10) == pdFAIL) {
 #if DEBUG_LOG
             ESP_LOGI(TAG,"scheduler could not get mutex");
 #endif
+            taskYIELD();
             continue;
         }
 
@@ -168,11 +152,12 @@ void RTSchedulerTask(void *pvParameter) {
     	}
         xSemaphoreGive(scheduler->scheduler_mutex);
         while (runnable) {
-            markRunnable(runnable->machine);
+            markPending(runnable->machine);
             struct Runnable *next = runnable->next;
             free(runnable);
             runnable = next;
         }
+        taskYIELD();
 	}
 }
 

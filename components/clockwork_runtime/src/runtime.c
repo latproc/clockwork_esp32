@@ -35,10 +35,6 @@ uint64_t upTime() {
     return (uint64_t)esp_timer_get_time() / 1000;
 }
 
-const char *name_from_id();
-
-static esp_mqtt_client_handle_t system_client = 0;
-
 int haveMQTT() {
     return mqtt_is_connected;
 }
@@ -52,6 +48,7 @@ void setMQTTstate(int which) {
     mqtt_is_connected = which;
 }
 
+#if 0
 static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
 {
     esp_mqtt_client_handle_t client = event->client;
@@ -93,6 +90,7 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
     }
     return ESP_OK;
 }
+#endif
 
 struct ExternalMessageItem {
 	struct list_node list;
@@ -115,6 +113,7 @@ static void push_message(struct cw_MQTTSUBSCRIBER *s, int message) {
     else {
         //ESP_LOGI(TAG, "failed to get mutex to push message");
     }
+    taskYIELD();
 }
 int have_external_message() {
     return list_top(&external_messages, struct ExternalMessageItem, list) != 0;
@@ -135,7 +134,7 @@ void process_next_external_message() {
         BaseType_t res = xSemaphoreTakeRecursive(runtime_mutex,10);
         if (res == pdPASS) {
 
-            sub->machine.set_value(sub, "message", &sub->message, message);
+            sub->machine.set_value(&sub->machine, "message", &sub->message, message);
             NotifyDependents(&sub->machine);
             markPending(&sub->machine);
             res = xSemaphoreGiveRecursive(runtime_mutex);
@@ -176,13 +175,12 @@ void publish_MQTT(struct cw_MQTTBROKER *broker, MachineBase *m, int state) {
     BaseType_t res = xSemaphoreTakeRecursive(message_mutex,10);
     if (res == pdPASS) {
         //ESP_LOGI(TAG, "publish_MQTT got message_mutex");
-        esp_mqtt_client_handle_t client = (broker) ? broker->client : system_client;
         if (haveMQTT()) {
             char buf[40];
             char data[40];
             snprintf(buf, 40, "/sampler/%s", m->name);
             snprintf(data, 40, "%lld %s %s", upTime(), m->name, name_from_id(state));
-            esp_mqtt_client_publish(client, buf, data, 0, 0, 0);
+            push_mqtt_message(broker, buf, data);
         }
         res = xSemaphoreGiveRecursive(message_mutex);
         assert(res == pdPASS);
@@ -198,14 +196,13 @@ void publish_MQTT_property(struct cw_MQTTBROKER *broker, MachineBase *m, const c
     if (res == pdPASS) {
         //ESP_LOGI(TAG, "publish_MQTT_property got message_mutex");
         //ESP_LOGI(TAG,"%lld publish_MQTT_property", upTime());
-        esp_mqtt_client_handle_t client = (broker) ? broker->client : system_client;
         if (!haveMQTT()) goto done_publish_property;
         char buf[60];
         char data[40];
         snprintf(buf, 60, "/sampler/%s/%s", m->name, name);
         snprintf(data, 40, "%lld %s %s %d", upTime(), m->name, name, value);
         //ESP_LOGI(TAG,"%lld publishing %s/%s", upTime(),buf, data);
-        esp_mqtt_client_publish(client, buf, data, 0, 0, 0);
+        push_mqtt_message(broker, buf, data);
     done_publish_property:
         res = xSemaphoreGiveRecursive(message_mutex);
         assert(res == pdPASS);
@@ -220,9 +217,9 @@ void sendMQTT(struct cw_MQTTBROKER *broker, const char *topic, const char *data)
    BaseType_t res = xSemaphoreTakeRecursive(message_mutex,10);
     if (res == pdPASS) {
         //ESP_LOGI(TAG, "sendMQTT got message_mutex");
-        esp_mqtt_client_handle_t client = (broker) ? broker->client : system_client;
         if (haveMQTT())
-            esp_mqtt_client_publish(client, topic, data, 0, 0, 0);
+            push_mqtt_message(broker, topic, data);
+
 
         res = xSemaphoreGiveRecursive(message_mutex);
         assert(res == pdPASS);
@@ -248,11 +245,11 @@ void rt_init(void) {
     list_head_init(&command_messages);
     list_head_init(&external_messages);
 
-    const esp_mqtt_client_config_t mqtt_cfg = {
-        .uri = CONFIG_ESP_MQTT_BROKER,
-        .event_handle = mqtt_event_handler,
-        //.cert_pem = (const char *)iot_eclipse_org_pem_start,
-    };
+    //const esp_mqtt_client_config_t mqtt_cfg = {
+    //    .uri = CONFIG_ESP_MQTT_BROKER,
+    //    .event_handle = mqtt_event_handler,
+    //    //.cert_pem = (const char *)iot_eclipse_org_pem_start,
+    //};
     //system_client = esp_mqtt_client_init(&mqtt_cfg);
     //esp_mqtt_client_start(system_client);
 
@@ -450,12 +447,21 @@ void default_set_value(MachineBase *m, const char *name, int *p, int v) {
     cw_send(m, 0, cw_message_property_change);
 }
 
+void default_describe(MachineBase *m) {
+	char buf[100];
+	snprintf(buf, 100, "%s: %s  Class: %s", m->name, name_from_id(m->state), m->class_name);
+	sendMQTT(0, "/response", buf);
+	snprintf(buf, 100, "Timer: %ld", m->TIMER);
+	sendMQTT(0,"/response", buf);
+}
+
 void initMachineBase(MachineBase *m, const char *name) {
 	m->p_next = first_machine;
     list_head_init(&m->depends);
     list_head_init(&m->actions);
     list_head_init(&m->messages);
     m->name = name;
+    m->class_name = "unknown";
 	first_machine = m;
     m->id = next_id++;
 	m->flags = FLAG_PASSIVE;
@@ -472,6 +478,7 @@ void initMachineBase(MachineBase *m, const char *name) {
     m->lookup_machine = 0;
     m->describe = 0;
     m->set_value = default_set_value;
+    m->describe = default_describe;
 	m->check_state = noAutoStateChanges;
 }
 

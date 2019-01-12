@@ -69,6 +69,7 @@ void cw_MQTTPUBLISHER_set_value (struct cw_MQTTPUBLISHER *m, const char *name, u
 void Init_cw_MQTTPUBLISHER(struct cw_MQTTPUBLISHER *m, const char *name, MachineBase *broker, const char *topic, Value message) {
 	initMachineBase(&m->machine, name);
 	init_io_address(&m->addr, 0, 0, 0, 0, iot_none, IO_STABLE);
+    m->machine.class_name = "MQTTPUBLISHER";
 	m->_broker = broker;
 	if (broker) MachineDependencies_add(broker, cw_MQTTPUBLISHER_To_MachineBase(m));
 	m->topic = topic;
