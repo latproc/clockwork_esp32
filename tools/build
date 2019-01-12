@@ -47,7 +47,7 @@ fi
 echo $0
 BINDIR="`dirname $0`"
 rm -rf /tmp/cw_export
-cw --export_c "$project"
+cw --export_c "$project" || exit 1
 echo
 echo "changes " `"$BINDIR"/changed_files`
 $BINDIR/update_cw
