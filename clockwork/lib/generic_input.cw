@@ -18,4 +18,6 @@ DINPUT MACHINE Input {
   on WHEN SELF IS on || Input IS on && Input.TIMER >= stable;
   off WHEN SELF IS off || Input IS off && Input.TIMER >= stable;
   off INITIAL;
+
+	ENTER off  { WAIT 1; }
 }

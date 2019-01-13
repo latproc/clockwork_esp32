@@ -1,4 +1,4 @@
-DIGITALIO MACHINE pin { idle INITIAL; }
+/*DIGITALIO MACHINE pin { idle INITIAL; }
 DIGITALIN MACHINE pin { idle INITIAL; }
 ADC MACHINE pin { idle INITIAL; }
 DAC MACHINE pin { idle INITIAL; }
@@ -11,7 +11,7 @@ SPI MACHINE cpu { idle INITIAL; }
 SDIO MACHINE cpu { idle INITIAL; }
 TOUCH MACHINE cpu { idle INITIAL; }
 JTAG MACHINE cpu { idle INITIAL; }
-
+*/
 INPUT MACHINE module, item {
   off INITIAL;
   on STATE;
