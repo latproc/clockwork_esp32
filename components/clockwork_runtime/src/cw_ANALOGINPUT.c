@@ -20,8 +20,9 @@ struct cw_ANALOGINPUT *create_cw_ANALOGINPUT(const char *name, int pin, MachineB
   Init_cw_ANALOGINPUT(p, name, pin, module, offset, channel, filter_settings);
   return p;
 }
-void cw_ANALOGINPUT_set_value (struct cw_ANALOGINPUT *input, const char *name, uint16_t value) {
-    publish_MQTT_property(0, &input->machine, name, value);
+void cw_ANALOGINPUT_set_value (struct cw_ANALOGINPUT *input, const char *name, int *p, int v) {
+    *p = v;
+    publish_MQTT_property(0, &input->machine, name, v);
 }
 void Init_cw_ANALOGINPUT(struct cw_ANALOGINPUT *m, const char *name, int pin, MachineBase *module, int offset, int channel, MachineBase *filter_settings)
 {
@@ -32,13 +33,16 @@ void Init_cw_ANALOGINPUT(struct cw_ANALOGINPUT *m, const char *name, int pin, Ma
   m->_module = module;
   m->_offset = offset;
   m->_adc_channel = channel;
+  m->Position = 0;
+  m->IOTIME = 0;
+  m->Velocity = 0;
   m->_filter_settings = filter_settings;
   m->machine.lookup = (lookup_func)cw_ANALOGINPUT_lookup;
   m->machine.lookup_machine = (lookup_machine_func)cw_ANALOGINPUT_lookup_machine;
-  m->machine.set_value = cw_ANALOGINPUT_set_value;
+  m->machine.set_value = (set_value_func)cw_ANALOGINPUT_set_value;
   m->machine.state = 0;
   m->machine.check_state = ( int(*)(MachineBase*) )cw_ANALOGINPUT_check_state;
-  m->machine.describe = cw_ANALOGINPUT_describe;
+  m->machine.describe = (describe_func)cw_ANALOGINPUT_describe;
   adc1_config_channel_atten(pin, ADC_ATTEN_DB_0);
   markPending(&m->machine);
 }

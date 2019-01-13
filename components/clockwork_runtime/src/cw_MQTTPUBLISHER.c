@@ -3,7 +3,7 @@
 #include "cw_MQTTBROKER.h"
 #include "cw_MQTTPUBLISHER.h"
 #define DEBUG_LOG 0
-static const char* TAG = "MQTTPUBLISHER";
+//static const char* TAG = "MQTTPUBLISHER";
 
 #define state_cw_INIT 1
 struct cw_MQTTPUBLISHER_Vars {
@@ -24,7 +24,7 @@ static void init_Vars(struct cw_MQTTPUBLISHER *m, struct cw_MQTTPUBLISHER_Vars *
 	v->m = m;
 	v->l_INIT = state_cw_INIT;
 	v->l_broker = &m->_broker->state;
-	v->l_message = m->message;
+	v->l_message = &m->message;
 	v->l_topic = m->topic;
 }
 static void backup_Vars(struct cw_MQTTPUBLISHER *m) {
@@ -32,7 +32,7 @@ static void backup_Vars(struct cw_MQTTPUBLISHER *m) {
 	struct cw_MQTTPUBLISHER_Vars_backup *b = m->backup;
 	b->l_INIT = v->l_INIT;
 	b->l_broker = *v->l_broker;
-	b->l_message = v->l_message;
+	b->l_message = *v->l_message;
 	b->l_topic = v->l_topic;
 }
 int *cw_MQTTPUBLISHER_lookup(struct cw_MQTTPUBLISHER *m, int symbol) {
@@ -61,7 +61,8 @@ int cw_MQTTPUBLISHER_handle_message(struct MachineBase *obj, struct MachineBase 
 	markPending(obj);
 	return 1;
 }
-void cw_MQTTPUBLISHER_set_value (struct cw_MQTTPUBLISHER *m, const char *name, uint16_t value) {
+void cw_MQTTPUBLISHER_set_value (struct cw_MQTTPUBLISHER *m, const char *name, int *p_val, uint16_t value) {
+	*p_val = value;
 	struct cw_MQTTBROKER *broker = (struct cw_MQTTBROKER *)m->_broker;
     publish_MQTT_property(broker, &m->machine, m->topic, value);
     publish_MQTT_property(0, &m->machine, name, value);
@@ -80,7 +81,7 @@ void Init_cw_MQTTPUBLISHER(struct cw_MQTTPUBLISHER *m, const char *name, Machine
 	m->machine.lookup = (lookup_func)cw_MQTTPUBLISHER_lookup; // lookup symbols within this machine
 	m->machine.lookup_machine = (lookup_machine_func)cw_MQTTPUBLISHER_lookup_machine; // lookup symbols within this machine
 	m->machine.describe = (describe_func)cw_MQTTPUBLISHER_describe;
-	m->machine.set_value = cw_MQTTPUBLISHER_set_value;
+	m->machine.set_value = (set_value_func)cw_MQTTPUBLISHER_set_value;
 	m->vars = (struct cw_MQTTPUBLISHER_Vars *)malloc(sizeof(struct cw_MQTTPUBLISHER_Vars));
 	m->backup = (struct cw_MQTTPUBLISHER_Vars_backup *)malloc(sizeof(struct cw_MQTTPUBLISHER_Vars_backup));
 	init_Vars(m, m->vars);

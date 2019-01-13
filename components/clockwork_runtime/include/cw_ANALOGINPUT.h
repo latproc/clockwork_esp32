@@ -15,6 +15,9 @@ struct cw_ANALOGINPUT
   MachineBase *_filter_settings;
   int _adc_channel;
   int VALUE;
+  uint64_t IOTIME;
+  int Position;
+  int Velocity;
 };
 struct IOAddress *cw_ANALOGINPUT_getAddress(struct cw_ANALOGINPUT *p);
 int cw_ANALOGINPUT_getChannel(struct cw_ANALOGINPUT *p);

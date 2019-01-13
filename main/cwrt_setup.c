@@ -13,6 +13,7 @@
 #include <cw_MQTTBROKER.h>
 #include <cw_MQTTPUBLISHER.h>
 #include <cw_MQTTSUBSCRIBER.h>
+#include <cw_DIGITALLEDS.h>
 
 #include <iointerface.h>
 

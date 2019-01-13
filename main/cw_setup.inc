@@ -211,18 +211,20 @@ struct cw_ANALOGOUTPUT *cw_inst_right = create_cw_ANALOGOUTPUT("right", cw_OLIME
 	struct IOItem *item_cw_inst_right = IOItem_create(m, cw_ANALOGOUTPUT_getAddress(cw_inst_right), cw_OLIMEX_GATEWAY32_GPIO17);
 	RTIOInterface_add(interface, item_cw_inst_right);
 }
-struct PointOutput *cw_inst_left_dir = create_cw_PointOutput("left_dir", cw_OLIMEX_GATEWAY32_GPIO32);
+struct PointOutput *cw_inst_left_dir = create_cw_PointOutput("left_dir", cw_OLIMEX_GATEWAY32_GPIO32, 0);
 gpio_pad_select_gpio(cw_OLIMEX_GATEWAY32_GPIO32);
 gpio_set_direction(cw_OLIMEX_GATEWAY32_GPIO32, GPIO_MODE_OUTPUT);
+gpio_set_level(cw_OLIMEX_GATEWAY32_GPIO32, 0);
 {
 	struct MachineBase *m = cw_PointOutput_To_MachineBase(cw_inst_left_dir);
 	if (m->init) m->init();
 	struct IOItem *item_cw_inst_left_dir = IOItem_create(m, cw_PointOutput_getAddress(cw_inst_left_dir), cw_OLIMEX_GATEWAY32_GPIO32);
 	RTIOInterface_add(interface, item_cw_inst_left_dir);
 }
-struct PointOutput *cw_inst_right_dir = create_cw_PointOutput("right_dir", cw_OLIMEX_GATEWAY32_LED);
+struct PointOutput *cw_inst_right_dir = create_cw_PointOutput("right_dir", cw_OLIMEX_GATEWAY32_LED, 0);
 gpio_pad_select_gpio(cw_OLIMEX_GATEWAY32_LED);
 gpio_set_direction(cw_OLIMEX_GATEWAY32_LED, GPIO_MODE_OUTPUT);
+gpio_set_level(cw_OLIMEX_GATEWAY32_LED, 0);
 {
 	struct MachineBase *m = cw_PointOutput_To_MachineBase(cw_inst_right_dir);
 	if (m->init) m->init();

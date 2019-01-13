@@ -39,15 +39,15 @@ done
 #echo project=$project
 #echo option_f=$option_f
 
-if [ "$project" == "" ]; then
-  echo "usage: $0 -p clockwork-project-dir"
+if [ "$project" == "" -a "$option_f" = "" -a $# -eq 0 ]; then
+  echo "usage: $0 -p clockwork-project-dir -f"
   exit 1
 fi
 
 echo $0
 BINDIR="`dirname $0`"
 rm -rf /tmp/cw_export
-cw --export_c "$project" || exit 1
+cw --export_c "$project" $* || exit 1
 echo
 echo "changes " `"$BINDIR"/changed_files`
 $BINDIR/update_cw

@@ -67,7 +67,7 @@ void cwMQTTTask(void *pvParameter) {
 static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
 {
     esp_mqtt_client_handle_t client = event->client;
-    int msg_id;
+    //int msg_id;
     struct cw_MQTTBROKER *context = event->user_context;
     switch (event->event_id) {
         case MQTT_EVENT_CONNECTED: {
@@ -75,12 +75,12 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
 			if (!haveMQTT()) {
 				setMQTTclient(client);
 				setMQTTstate(1);
-				msg_id = esp_mqtt_client_subscribe(client, "/command", 0);
+				/*msg_id = */esp_mqtt_client_subscribe(client, "/command", 0);
 			}
 			struct SubscriberListItem *item, *next;
 			list_for_each_safe(&context->subscribers, item, next, list) {
 				struct cw_MQTTSUBSCRIBER *subs = (struct cw_MQTTSUBSCRIBER *)item->s;
-				msg_id = esp_mqtt_client_subscribe(client, subs->topic, 0);
+				/*msg_id = */esp_mqtt_client_subscribe(client, subs->topic, 0);
 			}
 		}
             break;

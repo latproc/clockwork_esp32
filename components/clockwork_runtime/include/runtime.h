@@ -27,6 +27,13 @@
 #define sym_VALUE 1
 #define sym_broker 2
 #define sym_message 3
+#define sym_message 3
+#define sym_channel 4
+#define sym_max_output 5
+#define sym_num_pixels 6
+#define sym_pin 7
+#define sym_out 8
+#define sym_in 9
 
 extern int network_is_connected;
 

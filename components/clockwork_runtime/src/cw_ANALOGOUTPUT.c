@@ -36,8 +36,8 @@ void Init_cw_ANALOGOUTPUT(struct cw_ANALOGOUTPUT *m, const char *name, int pin, 
   m->channel = channel;
   m->machine.lookup = (lookup_func)cw_ANALOGOUTPUT_lookup;
   m->machine.lookup_machine = (lookup_machine_func)cw_ANALOGOUTPUT_lookup_machine;
-  m->machine.set_value = set_value;
-  m->machine.describe = cw_ANALOGOUTPUT_describe;
+  m->machine.set_value = (set_value_func)set_value;
+  m->machine.describe = (describe_func)cw_ANALOGOUTPUT_describe;
   m->machine.state = 0;
   m->machine.check_state = ( int(*)(MachineBase*) )cw_ANALOGOUTPUT_check_state;
 

@@ -3,7 +3,7 @@
 #include "cw_MQTTBROKER.h"
 #include "cw_MQTTSUBSCRIBER.h"
 #define DEBUG_LOG 0
-static const char* TAG = "MQTTSUBSCRIBER";
+//static const char* TAG = "MQTTSUBSCRIBER";
 
 #define state_cw_INIT 1
 struct cw_MQTTSUBSCRIBER_Vars {
@@ -80,7 +80,7 @@ void Init_cw_MQTTSUBSCRIBER(struct cw_MQTTSUBSCRIBER *m, const char *name, Machi
 	m->machine.lookup = (lookup_func)cw_MQTTSUBSCRIBER_lookup; // lookup symbols within this machine
 	m->machine.lookup_machine = (lookup_machine_func)cw_MQTTSUBSCRIBER_lookup_machine; // lookup symbols within this machine
 	m->machine.describe = (describe_func)cw_MQTTSUBSCRIBER_describe;
-	m->machine.set_value = cw_MQTTSUBSCRIBER_set_value;
+	m->machine.set_value = (set_value_func)cw_MQTTSUBSCRIBER_set_value;
 	m->vars = (struct cw_MQTTSUBSCRIBER_Vars *)malloc(sizeof(struct cw_MQTTSUBSCRIBER_Vars));
 	m->backup = (struct cw_MQTTSUBSCRIBER_Vars_backup *)malloc(sizeof(struct cw_MQTTSUBSCRIBER_Vars_backup));
 	init_Vars(m, m->vars);

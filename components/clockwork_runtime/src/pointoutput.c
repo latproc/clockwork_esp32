@@ -13,15 +13,17 @@
 static const char* TAG = "PointOutput";
 #endif
 
-struct PointOutput {
-	MachineBase machine;
-    int gpio_pin;
-    struct IOAddress addr;
-};
+int *cw_OUTPUT_lookup(struct PointOutput *m, int symbol) {
+	if (symbol == sym_pin) return &m->gpio_pin;
+	return 0;
+}
+MachineBase *cw_OUTPUT_lookup_machine(MachineBase *m, int symbol) {
+	return 0;
+}
 
-struct PointOutput *create_cw_PointOutput(const char *name, int gpio) {
+struct PointOutput *create_cw_PointOutput(const char *name, int gpio, int level) {
     struct PointOutput *p = (struct PointOutput *)malloc(sizeof(struct PointOutput));
-	Init_PointOutput(p, name, gpio);
+	Init_PointOutput(p, name, gpio, level);
 	return p;
 }
 
@@ -54,14 +56,20 @@ int PointOutput_check_state(struct PointOutput *m) {
     return 0;
 }
 
-void Init_PointOutput(struct PointOutput *m, const char *name, int gpio) {
+void Init_PointOutput(struct PointOutput *m, const char *name, int gpio, int level) {
 	initMachineBase(&m->machine, name);
     m->machine.class_name = "OUTPUT";
+    m->gpio_pin = gpio;
+    gpio_pad_select_gpio(gpio);
+    gpio_set_direction(gpio, GPIO_MODE_OUTPUT);
+    gpio_set_level(gpio, level);
     init_io_address(&m->addr, 0, 0, 0, 1, iot_digout, IO_STABLE);
 	m->machine.flags &= MASK_PASSIVE; /* not a passive machine */
     m->machine.state = state_PointOutput_off;
 	m->machine.check_state = ( int(*)(MachineBase*) )PointOutput_check_state;
     m->machine.handle = (message_func)point_output_handle_message;
+    m->machine.lookup = (lookup_func)cw_OUTPUT_lookup;
+    m->machine.lookup_machine = (lookup_machine_func)cw_OUTPUT_lookup_machine;
 	markPending(&m->machine);
     assert(xSemaphoreGiveRecursive(runtime_mutex) == pdFAIL);
 }
