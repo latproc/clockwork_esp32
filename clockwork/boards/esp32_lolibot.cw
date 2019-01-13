@@ -1,9 +1,9 @@
-BOARD_LOLIBOT MACHINE cpu {
+LOLIBOT BOARD cpu {
 	StatusLED PIN cpu.GPIO22;
-	NeoPixel NEOPIXELBUS cpu.GPIO2;
-	NeoPixel_j2 NEOPIXEL NeoPixel, 1;
-	NeoPixel_j3 NEOPIXEL NeoPixel, 2;
-	NeoPixel_j4 NEOPIXEL NeoPixel, 3;
+	NeoPixel PIN cpu.GPIO2;
+#	NeoPixel_j2 NEOPIXEL NeoPixel, 1;
+#	NeoPixel_j3 NEOPIXEL NeoPixel, 2;
+#	NeoPixel_j4 NEOPIXEL NeoPixel, 3;
 
 # J20 Expansion
 	J20_PIN2 PIN cpu.GPIO33;
