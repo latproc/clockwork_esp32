@@ -22,13 +22,15 @@ struct cw_ANALOGINPUT *create_cw_ANALOGINPUT(const char *name, int pin, MachineB
 }
 void cw_ANALOGINPUT_set_value (struct cw_ANALOGINPUT *input, const char *name, int *p, int v) {
     *p = v;
-    publish_MQTT_property(0, &input->machine, name, v);
+    input->IOTIME = upTime();
+    // do not publish analogue input changes (noisy)
+    //publish_MQTT_property(0, &input->machine, name, v);
 }
 void Init_cw_ANALOGINPUT(struct cw_ANALOGINPUT *m, const char *name, int pin, MachineBase *module, int offset, int channel, MachineBase *filter_settings)
 {
   initMachineBase(&m->machine, name);
   m->machine.class_name = "ANALOGINPUT";
-  init_io_address(&m->addr, 0, 0, 0,  16, iot_none, IO_STABLE);
+  init_io_address(&m->addr, 0, 0, 0,  16, iot_adc, IO_STABLE);
   m->gpio_pin = pin;
   m->_module = module;
   m->_offset = offset;

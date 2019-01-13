@@ -52,6 +52,11 @@ void cwrt_setup() {
         if (m->init) m->init();
     }
 
+    struct RTIOInterface *interface = RTIOInterface_get();
+    while (!interface) {
+    taskYIELD();
+    interface = RTIOInterface_get();
+    }
 
 #include "cw_setup.inc"
 

@@ -181,11 +181,6 @@
 #define cw_LOLIBOT_LEFT_REV                  15
 #define cw_LOLIBOT_RIGHT_FWD                 23
 #define cw_LOLIBOT_RIGHT_REV                 5
-struct RTIOInterface *interface = RTIOInterface_get();
-while (!interface) {
-  taskYIELD();
-  interface = RTIOInterface_get();
-}
 struct PointInput *cw_inst_button = create_cw_PointInput("button", cw_OLIMEX_GATEWAY32_BUT1);
 gpio_pad_select_gpio(cw_OLIMEX_GATEWAY32_BUT1);
 gpio_set_direction(cw_OLIMEX_GATEWAY32_BUT1, GPIO_MODE_INPUT);

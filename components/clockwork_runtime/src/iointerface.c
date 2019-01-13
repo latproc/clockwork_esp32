@@ -18,7 +18,7 @@
 #include "cw_ANALOGOUTPUT.h"
 #include "cw_ANALOGINPUT.h"
 
-#define DEBUG_LOG 0
+#define DEBUG_LOG 1
 #if DEBUG_LOG
 static const char* TAG = "IOInterface";
 #endif
@@ -167,11 +167,16 @@ void readIO() {
         if (item->data->io_type == iot_adc) { // always read inputs
             struct cw_ANALOGINPUT *ain = (struct cw_ANALOGINPUT*)item->machine;
             int val = adc1_get_raw(cw_ANALOGINPUT_getChannel(ain));
-            uint8_t cw_val = rt_get_io_bit(item->data);
+            uint8_t cw_val = rt_get_io_uint16(item->data);
             if (val != cw_val) {
+#if DEBUG_LOG
+            ESP_LOGI(TAG,"readIO read new analogue value %d", val);
+#endif
                 rt_set_io_uint16(item->data, val);
                 item->data->status = IO_DONE;
-                if (item->machine) {
+                if (ain) {
+                    if (item->machine->set_value)
+                        item->machine->set_value(ain, "VALUE", &ain->VALUE, val);
                     markPending(item->machine);
                     NotifyDependents(item->machine);
                 }
