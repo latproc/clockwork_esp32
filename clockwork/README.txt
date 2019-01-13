@@ -8,6 +8,7 @@ to run them, first compile the clockwork interpreter
 
 then run the interpreter passing this directory and an option to trigger the export:
 
-  build/cw --export_c ../examples/esp32/
+ ./tools/build <your cw code>
 
-files will be written to /tmp/cw_export
+a -f will also flash the ESP with the code
+ ./tools/build <your cw code>
