@@ -1,5 +1,8 @@
 build/
+main/cw_*
+main/project.h
 misc/
 .vscode/
 sdkconfig
+sdkconfig.old
 main/Kconfig.projbuild
