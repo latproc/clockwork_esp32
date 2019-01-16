@@ -51,7 +51,7 @@ cw --export_c "$project" $* || exit 1
 echo
 echo "changes " `"$BINDIR"/changed_files`
 $BINDIR/update_cw
-if [ "$option_f" == "" ]; then
+if [ "$option_f" = "" ]; then
   make
 else
   make flash
