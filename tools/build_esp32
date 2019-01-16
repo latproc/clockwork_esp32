@@ -1,0 +1,20 @@
+#!/bin/sh
+
+CW="`which cw`"
+BUILD_PATH=$HOME/github/clockwork_esp32/
+
+SOURCE="`pwd`"
+
+if [ "$CW" = "" ]; then
+  echo "cannot find the cw command, please update your PATH variable"
+  exit 1
+fi
+
+if [ ! -d "$BUILD_PATH" ]; then
+  echo "cannot find the clocwork_esp32 project files"
+  exit 2
+fi
+
+cd $BUILD_PATH || exit 2;
+tools/build $* $BUILD_PATH/clockwork/ $SOURCE
+
