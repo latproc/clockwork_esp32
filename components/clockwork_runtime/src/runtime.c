@@ -307,9 +307,12 @@ done_markRunnable:
 
 void markPending(MachineBase *m) {
     //ESP_LOGI(TAG,"%lld marking machine [%d] as pending", upTime(), m->id);
-    assert(runtime_mutex);
-    BaseType_t res = xSemaphoreTakeRecursive(runtime_mutex,10);
-    assert(res == pdPASS);
+    BaseType_t res = xSemaphoreTakeRecursive(runtime_mutex,2);
+    while (res != pdPASS) {
+        ESP_LOGI("runtime","%lld marking machine [%s] as pending (trouble getting runtime semaphore", upTime(), m->name);
+        res = xSemaphoreTakeRecursive(runtime_mutex,2);
+        vTaskDelay(1);
+    }
 	cwTask *t = pending_tasks;
 	while (t) {
 		if (t->machine == m) goto done_markPending;

@@ -45,7 +45,7 @@ void Init_cw_ANALOGINPUT(struct cw_ANALOGINPUT *m, const char *name, int pin, Ma
   m->machine.state = 0;
   m->machine.check_state = ( int(*)(MachineBase*) )cw_ANALOGINPUT_check_state;
   m->machine.describe = (describe_func)cw_ANALOGINPUT_describe;
-  adc1_config_channel_atten(pin, ADC_ATTEN_DB_0);
+  adc1_config_channel_atten(channel, ADC_ATTEN_DB_0);
   markPending(&m->machine);
 }
 struct IOAddress *cw_ANALOGINPUT_getAddress(struct cw_ANALOGINPUT *p)

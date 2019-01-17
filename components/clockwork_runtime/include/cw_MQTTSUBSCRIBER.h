@@ -22,7 +22,7 @@ struct SubscriberListItem {
 	struct cw_MQTTSUBSCRIBER *s;
 };
 
-struct IOAddress *cw_MQTTSUBSCRIBER_getAddress(struct cw_MQTTSUBSCRIBER *p);
+//struct IOAddress *cw_MQTTSUBSCRIBER_getAddress(struct cw_MQTTSUBSCRIBER *p);
 struct cw_MQTTSUBSCRIBER *create_cw_MQTTSUBSCRIBER(const char *name, MachineBase *broker, const char *topic);
 void Init_cw_MQTTSUBSCRIBER(struct cw_MQTTSUBSCRIBER * , const char *name, MachineBase *broker, const char *topic);
 MachineBase *cw_MQTTSUBSCRIBER_To_MachineBase(struct cw_MQTTSUBSCRIBER *);

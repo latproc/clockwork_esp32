@@ -18,7 +18,7 @@
 #include "cw_ANALOGOUTPUT.h"
 #include "cw_ANALOGINPUT.h"
 
-#define DEBUG_LOG 1
+#define DEBUG_LOG 0
 #if DEBUG_LOG
 static const char* TAG = "IOInterface";
 #endif
@@ -176,7 +176,7 @@ void readIO() {
                 item->data->status = IO_DONE;
                 if (ain) {
                     if (item->machine->set_value)
-                        item->machine->set_value(ain, "VALUE", &ain->VALUE, val);
+                        item->machine->set_value(&ain->machine, "VALUE", &ain->VALUE, val);
                     markPending(item->machine);
                     NotifyDependents(item->machine);
                 }

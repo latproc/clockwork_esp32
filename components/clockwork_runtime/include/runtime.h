@@ -22,6 +22,11 @@
 #define cw_message_turnOff -100
 #define cw_message_turnOn -101
 #define cw_message_property_change -102
+#define cw_message_black -103
+#define cw_message_red -104
+#define cw_message_green -105
+#define cw_message_blue -106
+#define cw_message_white -107
 
 // standard symbols
 #define sym_VALUE 1
@@ -34,6 +39,13 @@
 #define sym_pin 7
 #define sym_out 8
 #define sym_in 9
+#define sym_r 10
+#define sym_g 11
+#define sym_b 12
+#define sym_min 13
+#define sym_max 14
+#define sym_strip 15
+#define sym_position 16
 
 extern int network_is_connected;
 
