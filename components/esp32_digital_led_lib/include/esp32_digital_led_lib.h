@@ -66,16 +66,6 @@ inline pixelColor_t pixelFromRGBW(uint8_t r, uint8_t g, uint8_t b, uint8_t w)
 }
 
 typedef struct {
-  int rmtChannel;
-  int gpioNum;
-  int ledType;
-  int brightLimit;
-  int numPixels;
-  pixelColor_t * pixels;
-  void * _stateVars;
-} strand_t;
-
-typedef struct {
   int bytesPerPixel;
   uint32_t T0H;
   uint32_t T1H;
@@ -83,6 +73,17 @@ typedef struct {
   uint32_t T1L;
   uint32_t TRS;
 } ledParams_t;
+
+typedef struct {
+  int rmtChannel;
+  int gpioNum;
+  int ledType;
+  int brightLimit;
+  int numPixels;
+  pixelColor_t * pixels;
+  void * _stateVars;
+  ledParams_t customLedType; // used when ledType == -1
+} strand_t;
 
 enum led_types {
   LED_WS2812_V1,

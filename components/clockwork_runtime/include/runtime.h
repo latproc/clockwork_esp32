@@ -46,6 +46,12 @@
 #define sym_max 14
 #define sym_strip 15
 #define sym_position 16
+#define sym_bytesPerPixel 17
+#define sym_T0H 18
+#define sym_T1H 19
+#define sym_T0L 20
+#define sym_T1L 21
+#define sym_TRS 22
 
 extern int network_is_connected;
 

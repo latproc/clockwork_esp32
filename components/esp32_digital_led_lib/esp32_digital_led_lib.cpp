@@ -139,7 +139,7 @@ int digitalLeds_initStrands(strand_t strands [], int numStrands)
 
   for (int i = 0; i < localStrandCnt; i++) {
     strand_t * pStrand = &localStrands[i];
-    ledParams_t ledParams = ledParamsAll[pStrand->ledType];
+    ledParams_t ledParams = (pStrand->ledType>=0) ? ledParamsAll[pStrand->ledType] : pStrand->customLedType;
 
     pStrand->pixels = static_cast<pixelColor_t*>(malloc(pStrand->numPixels * sizeof(pixelColor_t)));
     if (pStrand->pixels == nullptr) {
@@ -213,7 +213,7 @@ void digitalLeds_resetPixels(strand_t * pStrand)
 int IRAM_ATTR digitalLeds_updatePixels(strand_t * pStrand)
 {
   digitalLeds_stateData * pState = static_cast<digitalLeds_stateData*>(pStrand->_stateVars);
-  ledParams_t ledParams = ledParamsAll[pStrand->ledType];
+  ledParams_t ledParams = (pStrand->ledType>=0) ? ledParamsAll[pStrand->ledType] : pStrand->customLedType;
 
   // Pack pixels into transmission buffer
   if (ledParams.bytesPerPixel == 3) {
@@ -269,7 +269,7 @@ static IRAM_ATTR void copyToRmtBlock_half(strand_t * pStrand)
   // When wraparound is happening, we want to keep the inactive half of the RMT block filled
 
   digitalLeds_stateData * pState = static_cast<digitalLeds_stateData*>(pStrand->_stateVars);
-  ledParams_t ledParams = ledParamsAll[pStrand->ledType];
+  ledParams_t ledParams = (pStrand->ledType>=0) ? ledParamsAll[pStrand->ledType] : pStrand->customLedType;
 
   uint16_t i, j, offset, len, byteval;
 

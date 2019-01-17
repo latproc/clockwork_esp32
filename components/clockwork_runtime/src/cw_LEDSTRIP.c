@@ -36,6 +36,7 @@ void cwDigitalLedsTask(void *pvParameter) {
 			struct cw_LEDSTRIP *strip = sli->strip;
 			int num_pix = strip->strand->s.numPixels;
 		    struct DigitalLedItem *item = 0;
+			digitalLeds_resetPixels(&strip->strand->s);
 			list_for_each(&strip->leds, item, list) {
 				struct cw_DIGITALLED *led = item->led;
 				if (led->position >= 0 && led->position < num_pix) {
@@ -100,9 +101,9 @@ MachineBase *cw_LEDSTRIP_lookup_machine(struct cw_LEDSTRIP *m, int symbol) {
 void cw_LEDSTRIP_describe(struct cw_LEDSTRIP *m);
 int cw_LEDSTRIP_handle_message(struct MachineBase *ramp, struct MachineBase *machine, int state);
 int cw_LEDSTRIP_check_state(struct cw_LEDSTRIP *m);
-struct cw_LEDSTRIP *create_cw_LEDSTRIP(const char *name, MachineBase *out) {
+struct cw_LEDSTRIP *create_cw_LEDSTRIP(const char *name, MachineBase *out, MachineBase *led_type) {
 	struct cw_LEDSTRIP *p = (struct cw_LEDSTRIP *)malloc(sizeof(struct cw_LEDSTRIP));
-	Init_cw_LEDSTRIP(p, name, out);
+	Init_cw_LEDSTRIP(p, name, out, led_type);
 	return p;
 }
 int cw_LEDSTRIP_INIT_enter(struct cw_LEDSTRIP *m, ccrContParam) {
@@ -127,11 +128,12 @@ void add_led_to_strip(struct cw_LEDSTRIP *strip, struct cw_DIGITALLED *led) {
 	}
 }
 
-void Init_cw_LEDSTRIP(struct cw_LEDSTRIP *m, const char *name, MachineBase *out) {
+void Init_cw_LEDSTRIP(struct cw_LEDSTRIP *m, const char *name, MachineBase *out, MachineBase *led_type) {
 	initMachineBase(&m->machine, name);
 	m->machine.class_name = "DIGITALLEDS";
 	//init_io_address(&m->addr, 0, 0, 0, 0, iot_none, IO_STABLE);
 	m->_out = out;
+	m->_led_type = led_type;
 	if (out) MachineDependencies_add(out, cw_LEDSTRIP_To_MachineBase(m));
 	m->channel = 1;
 	m->max_output = 32;
@@ -153,11 +155,19 @@ void Init_cw_LEDSTRIP(struct cw_LEDSTRIP *m, const char *name, MachineBase *out)
 		strand_t strand = { // Avoid using any of the strapping pins on the ESP32
   		  .rmtChannel = m->channel, 
 		  .gpioNum = m->pin, 
-		  .ledType = LED_SK6812W_V1, 
+		  .ledType = -1, //use the custom settings 
 		  .brightLimit = m->max_output, 
 		  .numPixels =  m->num_pixels, 
 		  .pixels = 0, 
-		  ._stateVars = 0
+		  ._stateVars = 0,
+		  .customLedType = {
+			.bytesPerPixel = *led_type->lookup(led_type, sym_bytesPerPixel),
+			.T0H = *led_type->lookup(led_type, sym_T0H),
+			.T1H = *led_type->lookup(led_type, sym_T1H),
+			.T0L = *led_type->lookup(led_type, sym_T0L),
+			.T1L = *led_type->lookup(led_type, sym_T1L),
+			.TRS = *led_type->lookup(led_type, sym_TRS)
+		  }
 		};
 		m->strand = (struct private_strand*)malloc(sizeof(struct private_strand));
 		memcpy(&m->strand->s, &strand, sizeof(strand_t));

@@ -305,11 +305,3 @@ UART MACHINE pin { idle INITIAL; }
 DAC MACHINE pin { idle INITIAL; }
 JTAG MACHINE pin { idle INITIAL; }
 */
-
-DIGITALLEDS MACHINE out{
-    OPTION channel 1;
-    OPTION pin out;
-    #OPTION led_type LED_WS2812B_V3;
-    OPTION max_output 32;
-    OPTION num_pixels 8;
-}
