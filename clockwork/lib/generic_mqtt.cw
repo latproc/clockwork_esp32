@@ -1,6 +1,7 @@
 MQTT_FOLLOWER MACHINE MQTT, A_Output {
 	update WHEN SELF IS idle && MQTT.message != A_Output.VALUE && TIMER > 100;
 	idle DEFAULT;
+
 	ENTER update { A_Output.VALUE := MQTT.message; }
 }
 
