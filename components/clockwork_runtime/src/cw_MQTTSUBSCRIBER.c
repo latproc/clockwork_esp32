@@ -63,7 +63,11 @@ int cw_MQTTSUBSCRIBER_handle_message(struct MachineBase *obj, struct MachineBase
 }
 void cw_MQTTSUBSCRIBER_set_value (struct cw_MQTTSUBSCRIBER *m, const char *name, int *var, int value) {
 	*var = value;
-    publish_MQTT_property(0, &m->machine, name, value);
+    m->IOTIME = upTime();
+    m->machine.START = m->IOTIME;
+    m->machine.TIMER = 0;
+	// do not republish subscribed values
+    //publish_MQTT_property(0, &m->machine, name, value);
 }
 void Init_cw_MQTTSUBSCRIBER(struct cw_MQTTSUBSCRIBER *m, const char *name, MachineBase *broker, const char *topic) {
 	initMachineBase(&m->machine, name);
@@ -73,6 +77,7 @@ void Init_cw_MQTTSUBSCRIBER(struct cw_MQTTSUBSCRIBER *m, const char *name, Machi
 	if (broker) MachineDependencies_add(broker, cw_MQTTSUBSCRIBER_To_MachineBase(m));
 	m->topic = topic;
 	m->message = 0;
+	m->IOTIME = 0;
 	m->VALUE = 0;
 	m->machine.state = state_cw_INIT;
 	m->machine.check_state = ( int(*)(MachineBase*) )cw_MQTTSUBSCRIBER_check_state;
@@ -107,8 +112,10 @@ int cw_MQTTSUBSCRIBER_check_state(struct cw_MQTTSUBSCRIBER *m) {
 void cw_MQTTSUBSCRIBER_describe(struct cw_MQTTSUBSCRIBER *m) {
 	struct cw_MQTTBROKER *broker = (struct cw_MQTTBROKER *)m->_broker;
 	char buf[100];
-	snprintf(buf, 100, "%s: %s:%d/%s = %d Class: MQTTSUBSCRIBER", m->machine.name, broker->host, broker->port, m->topic, m->message);
+	snprintf(buf, 100, "%s  Class: MQTTSUBSCRIBER", m->machine.name);
 	sendMQTT(0, "/response", buf);
-	snprintf(buf, 100, "Timer: %ld", m->machine.TIMER);
+	snprintf(buf, 100, "Timer: %ld, IOTIME: %lld", m->machine.TIMER, m->IOTIME);
 	sendMQTT(0, "/response", buf);
+	snprintf(buf, 100, "Topic: %s:%d/%s Value: %d", broker->host, broker->port, m->topic, m->message);
+	sendMQTT(0,"/response", buf);
 }

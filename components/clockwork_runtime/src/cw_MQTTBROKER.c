@@ -50,7 +50,6 @@ struct MQTTMessageListItem *pop_mqtt_message() {
 
 void cwMQTTTask(void *pvParameter) {
     while(1) {
-        vTaskDelay(1);
 		if (have_mqtt_message()) {
 			struct MQTTMessageListItem *item = pop_mqtt_message();
 			if (item == 0) continue;
@@ -60,6 +59,8 @@ void cwMQTTTask(void *pvParameter) {
 			free(item->msg);
 			free(item);
 		}
+		else
+		    vTaskDelay(1);
     }
 }
 

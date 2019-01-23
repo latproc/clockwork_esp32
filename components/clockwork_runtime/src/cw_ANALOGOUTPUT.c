@@ -100,4 +100,8 @@ void cw_ANALOGOUTPUT_describe(struct cw_ANALOGOUTPUT *m) {
 	char buf[100];
 	snprintf(buf, 100, "%s: %d Class: ANALOGOUTPUT", m->machine.name, m->VALUE);
 	sendMQTT(0, "/response", buf);
+	snprintf(buf, 100, "Timer: %ld", m->machine.TIMER);
+	sendMQTT(0,"/response", buf);
+	snprintf(buf, 100, "VALUE: %d", m->VALUE);
+	sendMQTT(0,"/response", buf);
 }

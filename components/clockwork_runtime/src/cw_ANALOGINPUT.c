@@ -23,6 +23,8 @@ struct cw_ANALOGINPUT *create_cw_ANALOGINPUT(const char *name, int pin, MachineB
 void cw_ANALOGINPUT_set_value (struct cw_ANALOGINPUT *input, const char *name, int *p, int v) {
     *p = v;
     input->IOTIME = upTime();
+    input->machine.START = input->IOTIME;
+    input->machine.TIMER = 0;
     // do not publish analogue input changes (noisy)
     //publish_MQTT_property(0, &input->machine, name, v);
 }
@@ -86,4 +88,8 @@ void cw_ANALOGINPUT_describe(struct cw_ANALOGINPUT *m) {
 	char buf[100];
 	snprintf(buf, 100, "%s: %d Class: ANALOGINPUT", m->machine.name, m->VALUE);
 	sendMQTT(0, "/response", buf);
+	snprintf(buf, 100, "Timer: %ld", m->machine.TIMER);
+	sendMQTT(0,"/response", buf);
+	snprintf(buf, 100, "IOTIME: %lld, VALUE: %d", m->IOTIME, m->VALUE);
+	sendMQTT(0,"/response", buf);
 }

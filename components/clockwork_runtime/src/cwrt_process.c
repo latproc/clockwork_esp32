@@ -22,20 +22,27 @@ int split_params(char *cmd, const char *params[], int n) {
     return i;
 }
 
+void update_timers() {
+    // update all machine's TIMER value 
+    uint64_t up_time = upTime();
+    MachineBase *m = getMachineIterator();
+    while (m) {
+        m->TIMER = up_time - m->START;
+        m = nextMachine(m);
+    }
+}
+
 void cwrt_process(unsigned long *last) {
     MachineBase *m = 0;
+
+    if (runnableMachines() || stateCheckMachines() || have_command() || have_external_message())
+        update_timers();
+
     if (runnableMachines())
     {
 #if DEBUG_LOG
         ESP_LOGI(TAG,"%lld running machines", upTime());
 #endif
-        // update all machine's TIMER value 
-        uint64_t up_time = upTime();
-        m = getMachineIterator();
-        while (m) {
-            m->TIMER = up_time - m->START;
-            m = nextMachine(m);
-        }
         // process runnable machines
         while ( (m = nextRunnable()) != 0 ) {
 #if DEBUG_LOG
@@ -129,6 +136,29 @@ void cwrt_process(unsigned long *last) {
                 }
                 sendMQTT(0, "/response", "unknown machine");
             }
+            else if (strcmp(params[0], "LIST") == 0) {
+                size_t len = 0, rem = 0;
+                char *response, *p;
+                MachineBase *m = getMachineIterator();
+                while (m) {
+                    len += strlen(m->name) + 1;
+                    m = nextMachine(m);
+                }
+                len += 2; // initial LF + terminating null
+                response = (char*)malloc(len);
+                p = response; rem = len;
+                *p++ = '\n'; --rem; // start with a new line
+                m = getMachineIterator();
+                while (m) {
+                    size_t n = strlen(m->name);
+                    snprintf(p, rem, "%s\n", m->name);
+                    ++n; // allow for the LF
+                    rem -= n; p += n;
+                    m = nextMachine(m);
+                }
+                sendMQTT(0, "/response", response);
+                free(response);
+           }
             else if (strcmp(params[0], "PROPERTY") == 0 && params[1] && params[2] && params[3]) {
 
             }
