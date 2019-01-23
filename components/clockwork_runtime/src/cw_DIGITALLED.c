@@ -1,7 +1,7 @@
 
 #include "base_includes.h"
 #include "cw_DIGITALLED.h"
-#define DEBUG_LOG 1
+#define DEBUG_LOG 0
 #if DEBUG_LOG
 static const char* TAG = "DIGITALLED";
 #endif
