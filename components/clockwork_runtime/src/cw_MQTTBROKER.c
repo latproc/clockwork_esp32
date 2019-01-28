@@ -21,7 +21,7 @@ struct MQTTMessageListItem {
 
 void push_mqtt_message(struct cw_MQTTBROKER *broker, const char *topic, const char *msg) {
 	uint64_t timestamp = upTime();
-    BaseType_t res = xSemaphoreTake(mqtt_mutex, 10);
+	BaseType_t res = xSemaphoreTake(mqtt_mutex, 10);
 	if (res == pdPASS) {
 		struct MQTTMessageListItem *item = (struct MQTTMessageListItem*) malloc(sizeof(struct MQTTMessageListItem));
 		item->broker = broker;
@@ -34,22 +34,23 @@ void push_mqtt_message(struct cw_MQTTBROKER *broker, const char *topic, const ch
 	}
 }
 static int have_mqtt_message() {
-    return list_top(&mqtt_messages, struct MQTTMessageListItem, list) != 0;
+	return list_top(&mqtt_messages, struct MQTTMessageListItem, list) != 0;
 }
 struct MQTTMessageListItem *pop_mqtt_message() {
-    if (!have_mqtt_message()) return 0;
-    BaseType_t res = xSemaphoreTake(mqtt_mutex, 10);
+	if (!have_mqtt_message()) return 0;
+	BaseType_t res = xSemaphoreTake(mqtt_mutex, 10);
 	if (res == pdPASS) {
-    	struct MQTTMessageListItem *mli = list_pop(&mqtt_messages, struct MQTTMessageListItem, list);
+		struct MQTTMessageListItem *mli = list_pop(&mqtt_messages, struct MQTTMessageListItem, list);
 		res = xSemaphoreGive(mqtt_mutex);
 		assert(res == pdPASS);
-    	return mli;
+		return mli;
 	}
 	return 0;
 }
 
 void cwMQTTTask(void *pvParameter) {
-    while(1) {
+	while(1) {
+		taskYIELD();
 		if (have_mqtt_message()) {
 			struct MQTTMessageListItem *item = pop_mqtt_message();
 			if (item == 0) continue;
@@ -60,19 +61,19 @@ void cwMQTTTask(void *pvParameter) {
 			free(item);
 		}
 		else
-		    vTaskDelay(1);
-    }
+			vTaskDelay(1);
+	}
 }
 
 
 static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
 {
-    esp_mqtt_client_handle_t client = event->client;
-    //int msg_id;
-    struct cw_MQTTBROKER *context = event->user_context;
-    switch (event->event_id) {
-        case MQTT_EVENT_CONNECTED: {
-            ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED %s", context->machine.name);
+	esp_mqtt_client_handle_t client = event->client;
+	//int msg_id;
+	struct cw_MQTTBROKER *context = event->user_context;
+	switch (event->event_id) {
+		case MQTT_EVENT_CONNECTED: {
+			ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED %s", context->machine.name);
 			if (!haveMQTT()) {
 				setMQTTclient(client);
 				setMQTTstate(1);
@@ -84,29 +85,29 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
 				/*msg_id = */esp_mqtt_client_subscribe(client, subs->topic, 0);
 			}
 		}
-            break;
-        case MQTT_EVENT_DISCONNECTED:
-            ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED %s", context->machine.name);
+			break;
+		case MQTT_EVENT_DISCONNECTED:
+			ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED %s", context->machine.name);
 			setMQTTstate(0);
-            break;
-        case MQTT_EVENT_SUBSCRIBED:
-            ESP_LOGI(TAG, "MQTT_EVENT_SUBSCRIBED, %s msg_id=%d topic: %.*s", context->machine.name, event->msg_id, event->topic_len, event->topic);
-            break;
-        case MQTT_EVENT_UNSUBSCRIBED:
-            ESP_LOGI(TAG, "MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
-            break;
-        case MQTT_EVENT_PUBLISHED:
-            ESP_LOGI(TAG, "MQTT_EVENT_PUBLISHED, %s msg_id=%d", context->machine.name, event->msg_id);
-            break;
-        case MQTT_EVENT_DATA:
+			break;
+		case MQTT_EVENT_SUBSCRIBED:
+			ESP_LOGI(TAG, "MQTT_EVENT_SUBSCRIBED, %s msg_id=%d topic: %.*s", context->machine.name, event->msg_id, event->topic_len, event->topic);
+			break;
+		case MQTT_EVENT_UNSUBSCRIBED:
+			ESP_LOGI(TAG, "MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
+			break;
+		case MQTT_EVENT_PUBLISHED:
+			ESP_LOGI(TAG, "MQTT_EVENT_PUBLISHED, %s msg_id=%d", context->machine.name, event->msg_id);
+			break;
+		case MQTT_EVENT_DATA:
 			receiveMQTT(context, event->topic, event->topic_len, event->data, event->data_len);
-            break;
-        case MQTT_EVENT_ERROR:
-            ESP_LOGI(TAG, "MQTT_EVENT_ERROR %s", context->machine.name);
-            break;
+			break;
+		case MQTT_EVENT_ERROR:
+			ESP_LOGI(TAG, "MQTT_EVENT_ERROR %s", context->machine.name);
+			break;
 	default: ;
-    }
-    return ESP_OK;
+	}
+	return ESP_OK;
 }
 
 #define state_cw_INIT 1
@@ -171,7 +172,7 @@ void Init_cw_MQTTBROKER(struct cw_MQTTBROKER *m, const char *name, const char *h
 	m->vars = (struct cw_MQTTBROKER_Vars *)malloc(sizeof(struct cw_MQTTBROKER_Vars));
 	m->backup = (struct cw_MQTTBROKER_Vars_backup *)malloc(sizeof(struct cw_MQTTBROKER_Vars_backup));
 	mqtt_mutex = xSemaphoreCreateRecursiveMutex();
-    assert(mqtt_mutex);
+	assert(mqtt_mutex);
 	list_head_init(&mqtt_messages);
 
 	list_head_init(&m->subscribers);
@@ -180,14 +181,14 @@ void Init_cw_MQTTBROKER(struct cw_MQTTBROKER *m, const char *name, const char *h
 	char *buf = (char*)malloc(n);
 	snprintf(buf, n, "mqtt://%s:%d", m->host, m->port);
 	ESP_LOGI(TAG,"%lld %s connecting to %s", upTime(), m->machine.name, buf);
-    const esp_mqtt_client_config_t mqtt_cfg = {
-        .uri = buf,
-        .event_handle = mqtt_event_handler,
+	const esp_mqtt_client_config_t mqtt_cfg = {
+		.uri = buf,
+		.event_handle = mqtt_event_handler,
 		.user_context = (void *)m
-        //.cert_pem = (const char *)iot_eclipse_org_pem_start,
-    };
-    m->client = esp_mqtt_client_init(&mqtt_cfg);
-    esp_mqtt_client_start(m->client);
+		//.cert_pem = (const char *)iot_eclipse_org_pem_start,
+	};
+	m->client = esp_mqtt_client_init(&mqtt_cfg);
+	esp_mqtt_client_start(m->client);
 	xTaskCreate(&cwMQTTTask, "cwMQTTTask", 10000, NULL, 3, NULL);
 
 	MachineActions_add(cw_MQTTBROKER_To_MachineBase(m), (enter_func)cw_MQTTBROKER_INIT_enter);
@@ -214,8 +215,8 @@ void cw_MQTTBROKER_describe(struct cw_MQTTBROKER *m) {
 	sendMQTT(0, "/response", buf);
 }
 void register_subscriber(struct cw_MQTTSUBSCRIBER *subs) {
-    struct SubscriberListItem *item = (struct SubscriberListItem*) malloc(sizeof(struct SubscriberListItem));
-    item->s = subs;
+	struct SubscriberListItem *item = (struct SubscriberListItem*) malloc(sizeof(struct SubscriberListItem));
+	item->s = subs;
 	struct cw_MQTTBROKER *broker = (struct cw_MQTTBROKER *)subs->_broker;
-    list_add_tail(&broker->subscribers, &item->list);
+	list_add_tail(&broker->subscribers, &item->list);
 }

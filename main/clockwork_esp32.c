@@ -49,7 +49,7 @@ void cwrt_task(void *pvParameter)
 		cwrt_process(&last);
         unsigned long now = upTime();
         if (now < last || now - last > 50) {
-            vTaskDelay(1);
+            taskYIELD();
             last = now;
         }
     }

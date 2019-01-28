@@ -101,17 +101,15 @@ struct ExternalMessageItem {
 static void push_message(struct cw_MQTTSUBSCRIBER *s, int message) {
     BaseType_t res = xSemaphoreTakeRecursive(message_mutex,10);
     if (res == pdPASS) {
-        //ESP_LOGI(TAG, "push_message got message_mutex");
         struct ExternalMessageItem *item = (struct ExternalMessageItem*) malloc(sizeof(struct ExternalMessageItem));
         item->s = s;
         item->message = message;
         list_add_tail(&external_messages, &item->list);
         res = xSemaphoreGiveRecursive(message_mutex);
         assert(res == pdPASS);
-        //ESP_LOGI(TAG, "push_message released message_mutex");
     }
     else {
-        //ESP_LOGI(TAG, "failed to get mutex to push message");
+        ESP_LOGI(TAG, "failed to get mutex collecting mqtt message");
     }
     taskYIELD();
 }
@@ -122,18 +120,16 @@ void process_next_external_message() {
     if (!have_external_message()) return;
     BaseType_t res = xSemaphoreTakeRecursive(message_mutex,10);
     if (res == pdPASS) {
-        //ESP_LOGI(TAG, "process_next_external_message got message_mutex");
         struct ExternalMessageItem *ml = list_pop(&external_messages, struct ExternalMessageItem, list);
         res = xSemaphoreGiveRecursive(message_mutex);
         assert(res == pdPASS);
-        //ESP_LOGI(TAG, "process_next_external_message released message_mutex");
+
         if (!ml) return;
         struct cw_MQTTSUBSCRIBER *sub = ml->s;
         int message = ml->message;
         free(ml);
         BaseType_t res = xSemaphoreTakeRecursive(runtime_mutex,10);
         if (res == pdPASS) {
-
             sub->machine.set_value(&sub->machine, "message", &sub->message, message);
             NotifyDependents(&sub->machine);
             markPending(&sub->machine);
@@ -142,7 +138,7 @@ void process_next_external_message() {
         }
     }
     else {
-        //ESP_LOGI(TAG, "failed to get mutex to process next message");
+        ESP_LOGI(TAG, "failed to get mutex to process external message");
     }
 }
 
@@ -311,7 +307,8 @@ void markPending(MachineBase *m) {
     while (res != pdPASS) {
         ESP_LOGI("runtime","%lld marking machine [%s] as pending (trouble getting runtime semaphore", upTime(), m->name);
         res = xSemaphoreTakeRecursive(runtime_mutex,2);
-        vTaskDelay(1);
+        //vTaskDelay(1);
+        taskYIELD();
     }
 	cwTask *t = pending_tasks;
 	while (t) {
